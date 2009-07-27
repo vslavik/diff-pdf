@@ -22,8 +22,8 @@ cairo_surface_t *render_page(PopplerPage *page)
     double w, h;
     poppler_page_get_size(page, &w, &h);
 
-    const int w_px = RESOLUTION * w / 72.0;
-    const int h_px = RESOLUTION * h / 72.0;
+    const int w_px = int(RESOLUTION * w / 72.0);
+    const int h_px = int(RESOLUTION * h / 72.0);
 
     cairo_surface_t *surface =
         cairo_image_surface_create(CAIRO_FORMAT_RGB24, w_px, h_px);
