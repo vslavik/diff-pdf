@@ -7,7 +7,10 @@
 #include <cairo/cairo.h>
 #include <cairo/cairo-pdf.h>
 
+#include <wx/app.h>
+#include <wx/cmdline.h>
 #include <wx/filename.h>
+#include <wx/log.h>
 
 
 // Resolution to use for rasterization, in DPI
@@ -194,20 +197,45 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2)
 
 int main(int argc, char *argv[])
 {
-    if ( argc != 3 )
+    wxInitializer wxinitializer;
+    g_type_init();
+
+
+    static const wxCmdLineEntryDesc cmd_line_desc[] =
     {
-        fprintf(stderr, "Usage: %s file1.pdf file2.pdf\n", argv[0]);
-        return 2;
+        { wxCMD_LINE_SWITCH,
+                  wxT("h"), wxT("help"), wxT("show this help message"),
+                  wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
+
+        { wxCMD_LINE_PARAM,
+                  NULL, NULL, wxT("file1.pdf"), wxCMD_LINE_VAL_STRING, 0 },
+        { wxCMD_LINE_PARAM,
+                  NULL, NULL, wxT("file2.pdf"), wxCMD_LINE_VAL_STRING, 0 },
+
+        { wxCMD_LINE_NONE }
+    };
+
+    wxCmdLineParser parser(cmd_line_desc, argc, argv);
+    switch ( parser.Parse() )
+    {
+        case -1:
+            return 0;
+
+        case 0:
+            // everything is ok; proceed
+            break;
+
+        default:
+            wxLogMessage(wxT("Syntax error detected, aborting."));
+            return 2;
     }
 
-    wxFileName file1(wxString(argv[1], wxConvLibc));
-    wxFileName file2(wxString(argv[2], wxConvLibc));
+    wxFileName file1(parser.GetParam(0));
+    wxFileName file2(parser.GetParam(1));
     file1.MakeAbsolute();
     file2.MakeAbsolute();
     const wxString url1 = wxT("file://") + file1.GetFullPath(wxPATH_UNIX);
     const wxString url2 = wxT("file://") + file2.GetFullPath(wxPATH_UNIX);
-
-    g_type_init();
 
     GError *err;
 
