@@ -13,6 +13,9 @@
 #include <wx/log.h>
 
 
+bool g_verbose = true;
+
+
 // Resolution to use for rasterization, in DPI
 #define RESOLUTION  300
 
@@ -113,7 +116,7 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2)
 
 
 bool page_compare(cairo_t *cr_out,
-                  PopplerPage *page1, PopplerPage *page2)
+                  int page_index, PopplerPage *page1, PopplerPage *page2)
 {
     // FIXME: handle missing pages correctly
     assert( page1 );
@@ -137,6 +140,9 @@ bool page_compare(cairo_t *cr_out,
         cairo_restore(cr_out);
 
         cairo_surface_destroy(diff);
+
+        if ( g_verbose )
+            printf("page %d differs\n", page_index);
     }
     else
     {
@@ -173,7 +179,11 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
     int pages_total = pages1 > pages2 ? pages1 : pages2;
 
     if ( pages1 != pages2 )
+    {
+        if ( g_verbose )
+            printf("pages count differs: %d vs %d\n", pages1, pages2);
         are_same = false;
+    }
 
     for ( int page = 0; page < pages_total; page++ )
     {
@@ -184,7 +194,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                              ? poppler_document_get_page(doc2, page)
                              : NULL;
 
-        if ( !page_compare(cr_out, page1, page2) )
+        if ( !page_compare(cr_out, page, page1, page2) )
             are_same = false;
     }
 
@@ -206,6 +216,9 @@ int main(int argc, char *argv[])
         { wxCMD_LINE_SWITCH,
                   wxT("h"), wxT("help"), wxT("show this help message"),
                   wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
+
+        { wxCMD_LINE_SWITCH,
+                  wxT("v"), wxT("verbose"), wxT("be verbose") },
 
         { wxCMD_LINE_OPTION,
                   NULL, wxT("pdf"), wxT("output differences to given PDF file"),
