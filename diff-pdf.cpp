@@ -152,7 +152,7 @@ bool page_compare(cairo_t *cr_out,
     cairo_surface_destroy(img1);
     cairo_surface_destroy(img2);
 
-    return diff != NULL;
+    return diff == NULL;
 }
 
 
