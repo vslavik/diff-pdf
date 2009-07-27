@@ -156,7 +156,8 @@ bool page_compare(cairo_t *cr_out,
 }
 
 
-bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2)
+bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
+                 const char *pdf_output)
 {
     bool are_same = true;
 
@@ -164,8 +165,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2)
     poppler_page_get_size(poppler_document_get_page(doc1, 0), &w, &h);
 
     cairo_surface_t *surface_out =
-          // FIXME: specify output file
-          cairo_pdf_surface_create("foo.pdf", w, h);
+          cairo_pdf_surface_create(pdf_output, w, h);
     cairo_t *cr_out = cairo_create(surface_out);
 
     int pages1 = poppler_document_get_n_pages(doc1);
@@ -207,10 +207,17 @@ int main(int argc, char *argv[])
                   wxT("h"), wxT("help"), wxT("show this help message"),
                   wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
 
+        { wxCMD_LINE_OPTION,
+                  NULL, wxT("pdf"), wxT("output differences to given PDF file"),
+                  wxCMD_LINE_VAL_STRING },
+
+        { wxCMD_LINE_SWITCH,
+                  NULL, wxT("view"), wxT("view the differences in a window") },
+
         { wxCMD_LINE_PARAM,
-                  NULL, NULL, wxT("file1.pdf"), wxCMD_LINE_VAL_STRING, 0 },
+                  NULL, NULL, wxT("file1.pdf"), wxCMD_LINE_VAL_STRING },
         { wxCMD_LINE_PARAM,
-                  NULL, NULL, wxT("file2.pdf"), wxCMD_LINE_VAL_STRING, 0 },
+                  NULL, NULL, wxT("file2.pdf"), wxCMD_LINE_VAL_STRING },
 
         { wxCMD_LINE_NONE }
     };
@@ -255,10 +262,22 @@ int main(int argc, char *argv[])
         return 3;
     }
 
-    bool are_same = doc_compare(doc1, doc2);
+    int retval = 0;
+
+    wxString pdf_file;
+    if ( parser.Found(wxT("pdf"), &pdf_file) )
+    {
+        bool are_same = doc_compare(doc1, doc2, pdf_file.utf8_str());
+        retval = are_same ? 0 : 1;
+    }
+
+    if ( parser.Found(wxT("view")) )
+    {
+        // FIXME
+    }
 
     g_object_unref(doc1);
     g_object_unref(doc2);
 
-    return are_same ? 0 : 1;
+    return retval;
 }
