@@ -7,6 +7,8 @@
 #include <cairo/cairo.h>
 #include <cairo/cairo-pdf.h>
 
+#include <wx/filename.h>
+
 
 // Resolution to use for rasterization, in DPI
 #define RESOLUTION  300
@@ -198,11 +200,18 @@ int main(int argc, char *argv[])
         return 2;
     }
 
+    wxFileName file1(wxString(argv[1], wxConvLibc));
+    wxFileName file2(wxString(argv[2], wxConvLibc));
+    file1.MakeAbsolute();
+    file2.MakeAbsolute();
+    const wxString url1 = wxT("file://") + file1.GetFullPath(wxPATH_UNIX);
+    const wxString url2 = wxT("file://") + file2.GetFullPath(wxPATH_UNIX);
+
     g_type_init();
 
     GError *err;
 
-    PopplerDocument *doc1 = poppler_document_new_from_file(argv[1], NULL, &err);
+    PopplerDocument *doc1 = poppler_document_new_from_file(url1.utf8_str(), NULL, &err);
     if ( !doc1 )
     {
         fprintf(stderr, "Error opening %s: %s\n", argv[1], err->message);
@@ -210,7 +219,7 @@ int main(int argc, char *argv[])
         return 3;
     }
 
-    PopplerDocument *doc2 = poppler_document_new_from_file(argv[2], NULL, &err);
+    PopplerDocument *doc2 = poppler_document_new_from_file(url2.utf8_str(), NULL, &err);
     if ( !doc2 )
     {
         fprintf(stderr, "Error opening %s: %s\n", argv[2], err->message);
