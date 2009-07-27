@@ -246,7 +246,6 @@ int main(int argc, char *argv[])
             break;
 
         default:
-            wxLogMessage(wxT("Syntax error detected, aborting."));
             return 2;
     }
 
