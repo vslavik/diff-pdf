@@ -238,14 +238,13 @@ int main(int argc, char *argv[])
     wxCmdLineParser parser(cmd_line_desc, argc, argv);
     switch ( parser.Parse() )
     {
-        case -1:
+        case -1: // --help
             return 0;
 
-        case 0:
-            // everything is ok; proceed
+        case 0: // everything is ok; proceed
             break;
 
-        default:
+        default: // syntax error
             return 2;
     }
 
