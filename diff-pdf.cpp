@@ -150,33 +150,36 @@ bool page_compare(cairo_t *cr_out,
 
     cairo_surface_t *diff = diff_images(img1, img2);
 
-    if ( diff )
+    if ( diff && g_verbose )
+        printf("page %d differs\n", page_index);
+
+    if ( cr_out )
     {
-        // render the difference as high-resolution bitmap
+        if ( diff )
+        {
+            // render the difference as high-resolution bitmap
 
-        cairo_save(cr_out);
-        cairo_scale(cr_out, 72.0 / RESOLUTION, 72.0 / RESOLUTION);
+            cairo_save(cr_out);
+            cairo_scale(cr_out, 72.0 / RESOLUTION, 72.0 / RESOLUTION);
 
-        cairo_set_source_surface(cr_out, diff ? diff : img1, 0, 0);
-        cairo_paint(cr_out);
+            cairo_set_source_surface(cr_out, diff ? diff : img1, 0, 0);
+            cairo_paint(cr_out);
 
-        cairo_restore(cr_out);
+            cairo_restore(cr_out);
 
-        cairo_surface_destroy(diff);
+            cairo_surface_destroy(diff);
+        }
+        else
+        {
+            // save space (as well as improve rendering quality) in diff pdf
+            // by writing unchanged pages in their original form rather than
+            // a rasterized one
 
-        if ( g_verbose )
-            printf("page %d differs\n", page_index);
+            poppler_page_render(page1, cr_out);
+        }
+
+        cairo_show_page(cr_out);
     }
-    else
-    {
-        // save space (as well as improve rendering quality) in diff pdf
-        // by writing unchanged pages in their original form rather than
-        // a rasterized one
-
-        poppler_page_render(page1, cr_out);
-    }
-
-    cairo_show_page(cr_out);
 
     if ( img1 )
         cairo_surface_destroy(img1);
@@ -195,9 +198,14 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
     double w, h;
     poppler_page_get_size(poppler_document_get_page(doc1, 0), &w, &h);
 
-    cairo_surface_t *surface_out =
-          cairo_pdf_surface_create(pdf_output, w, h);
-    cairo_t *cr_out = cairo_create(surface_out);
+    cairo_surface_t *surface_out = NULL;
+    cairo_t *cr_out = NULL;
+
+    if ( pdf_output )
+    {
+        surface_out = cairo_pdf_surface_create(pdf_output, w, h);
+        cr_out = cairo_create(surface_out);
+    }
 
     int pages1 = poppler_document_get_n_pages(doc1);
     int pages2 = poppler_document_get_n_pages(doc2);
@@ -223,8 +231,11 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
             are_same = false;
     }
 
-    cairo_destroy(cr_out);
-    cairo_surface_destroy(surface_out);
+    if ( pdf_output )
+    {
+        cairo_destroy(cr_out);
+        cairo_surface_destroy(surface_out);
+    }
 
     return are_same;
 }
@@ -298,22 +309,24 @@ int main(int argc, char *argv[])
         return 3;
     }
 
-    int retval = 0;
+    bool are_same = true;
 
     wxString pdf_file;
     if ( parser.Found(wxT("pdf"), &pdf_file) )
     {
-        bool are_same = doc_compare(doc1, doc2, pdf_file.utf8_str());
-        retval = are_same ? 0 : 1;
+        are_same = doc_compare(doc1, doc2, pdf_file.utf8_str());
     }
-
-    if ( parser.Found(wxT("view")) )
+    else if ( parser.Found(wxT("view")) )
     {
         // FIXME
+    }
+    else
+    {
+        are_same = doc_compare(doc1, doc2, NULL);
     }
 
     g_object_unref(doc1);
     g_object_unref(doc2);
 
-    return retval;
+    return are_same ? 0 : 1;
 }
