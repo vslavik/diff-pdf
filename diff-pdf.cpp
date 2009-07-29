@@ -57,12 +57,36 @@ cairo_surface_t *render_page(PopplerPage *page)
 
 cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2)
 {
-    const int width = cairo_image_surface_get_width(s1);
-    const int height = cairo_image_surface_get_height(s1);
+    assert( s1 || s2 );
+
+    const int width = cairo_image_surface_get_width(s1 ? s1 : s2);
+    const int height = cairo_image_surface_get_height(s1 ? s1 : s2);
 
     // FIXME: handle pages of different sizes
     assert( width == cairo_image_surface_get_width(s2) );
     assert( height == cairo_image_surface_get_height(s2) );
+
+
+    // deal with pages present in only one document first, by creating a dummy
+    // page for this case
+    cairo_surface_t *dummy = NULL;
+    if ( !s1 || !s2 )
+    {
+        dummy = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
+
+        // clear the surface to white background:
+        cairo_t *cr = cairo_create(dummy);
+        cairo_set_source_rgb(cr, 1, 1, 1);
+        cairo_rectangle(cr, 0, 0, width, height);
+        cairo_fill(cr);
+        cairo_destroy(cr);
+
+        if ( !s1 )
+            s1 = dummy;
+        if ( !s2 )
+            s2 = dummy;
+    }
+
 
     bool changes = false;
 
@@ -103,6 +127,9 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2)
         }
     }
 
+    if ( dummy )
+        cairo_surface_destroy(dummy);
+
     if ( changes )
     {
         return diff;
@@ -118,12 +145,8 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2)
 bool page_compare(cairo_t *cr_out,
                   int page_index, PopplerPage *page1, PopplerPage *page2)
 {
-    // FIXME: handle missing pages correctly
-    assert( page1 );
-    assert( page2 );
-
-    cairo_surface_t *img1 = render_page(page1);
-    cairo_surface_t *img2 = render_page(page2);
+    cairo_surface_t *img1 = page1 ? render_page(page1) : NULL;
+    cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
 
     cairo_surface_t *diff = diff_images(img1, img2);
 
@@ -155,8 +178,10 @@ bool page_compare(cairo_t *cr_out,
 
     cairo_show_page(cr_out);
 
-    cairo_surface_destroy(img1);
-    cairo_surface_destroy(img2);
+    if ( img1 )
+        cairo_surface_destroy(img1);
+    if ( img2 )
+        cairo_surface_destroy(img2);
 
     return diff == NULL;
 }
