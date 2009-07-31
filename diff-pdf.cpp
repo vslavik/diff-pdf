@@ -1,6 +1,10 @@
 
+#include "bmpviewer.h"
+
 #include <stdio.h>
 #include <assert.h>
+
+#include <vector>
 
 #include <glib.h>
 #include <poppler.h>
@@ -11,14 +15,17 @@
 #include <wx/cmdline.h>
 #include <wx/filename.h>
 #include <wx/log.h>
+#include <wx/frame.h>
+#include <wx/sizer.h>
 
+// ------------------------------------------------------------------------
+// PDF rendering functions
+// ------------------------------------------------------------------------
 
 bool g_verbose = true;
 
-
 // Resolution to use for rasterization, in DPI
 #define RESOLUTION  300
-
 
 cairo_surface_t *render_page(PopplerPage *page)
 {
@@ -190,8 +197,12 @@ bool page_compare(cairo_t *cr_out,
 }
 
 
+// Compares two documents, writing diff PDF into file named 'pdf_output' if
+// not NULL. if 'differences' is not NULL, puts a map of which pages differ
+// into it.
 bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
-                 const char *pdf_output)
+                 const char *pdf_output,
+                 std::vector<bool> *differences)
 {
     bool are_same = true;
 
@@ -227,7 +238,11 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                              ? poppler_document_get_page(doc2, page)
                              : NULL;
 
-        if ( !page_compare(cr_out, page, page1, page2) )
+        const bool page_same = page_compare(cr_out, page, page1, page2);
+        if ( differences )
+            differences->push_back(!page_same);
+
+        if ( !page_same )
             are_same = false;
     }
 
@@ -241,11 +256,151 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
 }
 
 
+// ------------------------------------------------------------------------
+// wxWidgets GUI
+// ------------------------------------------------------------------------
+
+class DiffFrame : public wxFrame
+{
+public:
+    DiffFrame(const wxString& title)
+        : wxFrame(NULL, wxID_ANY, title)
+    {
+        m_cur_page = -1;
+
+        CreateStatusBar();
+        CreateToolBar();
+
+        m_viewer = new BitmapViewer(this);
+
+        wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
+        sizer->Add(m_viewer, wxSizerFlags(1).Expand());
+        SetSizer(sizer);
+    }
+
+    void SetDocs(PopplerDocument *doc1, PopplerDocument *doc2)
+    {
+        wxBusyCursor wait;
+
+        m_doc1 = doc1;
+        m_doc2 = doc2;
+
+        doc_compare(m_doc1, m_doc2, NULL, &m_pages);
+
+        m_diff_count = 0;
+        for ( std::vector<bool>::const_iterator i = m_pages.begin();
+              i != m_pages.end();
+              ++i )
+        {
+            if ( *i )
+                m_diff_count++;
+        }
+
+        GoToPage(0);
+    }
+
+    void GoToPage(int n)
+    {
+        m_cur_page = n;
+
+        const int pages1 = poppler_document_get_n_pages(m_doc1);
+        const int pages2 = poppler_document_get_n_pages(m_doc2);
+
+        PopplerPage *page1 = n < pages1
+                             ? poppler_document_get_page(m_doc1, n)
+                             : NULL;
+        PopplerPage *page2 = n < pages2
+                             ? poppler_document_get_page(m_doc2, n)
+                             : NULL;
+
+        cairo_surface_t *img1 = page1 ? render_page(page1) : NULL;
+        cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
+        cairo_surface_t *diff = diff_images(img1, img2);
+
+        if ( diff )
+            m_viewer->Set(diff);
+        else
+            m_viewer->Set(img1);
+
+        if ( img1 )
+            cairo_surface_destroy(img1);
+        if ( img2 )
+            cairo_surface_destroy(img2);
+        if ( diff )
+            cairo_surface_destroy(diff);
+
+        UpdateStatus();
+    }
+
+
+private:
+    void UpdateStatus()
+    {
+        SetStatusText
+        (
+            wxString::Format
+            (
+                wxT("Page %d of %d; %d of them are different, this page %s"),
+                m_cur_page + 1 /* humans prefer 1-based counting*/,
+                m_pages.size(),
+                m_diff_count,
+                m_pages[m_cur_page] ? wxT("differs") : wxT("is unchanged")
+            )
+        );
+    }
+
+private:
+    BitmapViewer *m_viewer;
+    PopplerDocument *m_doc1, *m_doc2;
+    std::vector<bool> m_pages;
+    int m_diff_count;
+    int m_cur_page;
+};
+
+
+
+class DiffPdfApp : public wxApp
+{
+public:
+    virtual bool OnInit()
+    {
+        DiffFrame *tlw = new DiffFrame(m_title);
+
+        // like in LMI, maximize the window
+        tlw->Maximize();
+        tlw->Show();
+
+        tlw->SetDocs(m_doc1, m_doc2);
+
+        return true;
+    }
+
+    void SetData(const wxString& file1, PopplerDocument *doc1,
+                 const wxString& file2, PopplerDocument *doc2)
+    {
+        m_title = wxString::Format(wxT("Differences between %s and %s"), file1.c_str(), file2.c_str());
+        m_doc1 = doc1;
+        m_doc2 = doc2;
+    }
+
+private:
+    wxString m_title;
+    PopplerDocument *m_doc1, *m_doc2;
+};
+
+IMPLEMENT_APP_NO_MAIN(DiffPdfApp);
+
+
+// ------------------------------------------------------------------------
+// main()
+// ------------------------------------------------------------------------
+
 int main(int argc, char *argv[])
 {
-    wxInitializer wxinitializer;
-    g_type_init();
+    wxAppConsole::CheckBuildOptions(WX_BUILD_OPTIONS_SIGNATURE, "diff-pdf");
+    wxInitializer wxinitializer(argc, argv);
 
+    g_type_init();
 
     static const wxCmdLineEntryDesc cmd_line_desc[] =
     {
@@ -309,24 +464,26 @@ int main(int argc, char *argv[])
         return 3;
     }
 
-    bool are_same = true;
+    int retval = 0;
 
     wxString pdf_file;
     if ( parser.Found(wxT("pdf"), &pdf_file) )
     {
-        are_same = doc_compare(doc1, doc2, pdf_file.utf8_str());
+        retval = doc_compare(doc1, doc2, pdf_file.utf8_str(), NULL) ? 0 : 1;
     }
     else if ( parser.Found(wxT("view")) )
     {
-        // FIXME
+        wxGetApp().SetData(parser.GetParam(0), doc1,
+                           parser.GetParam(1), doc2);
+        retval = wxEntry(argc, argv);
     }
     else
     {
-        are_same = doc_compare(doc1, doc2, NULL);
+        retval = doc_compare(doc1, doc2, NULL, NULL) ? 0 : 1;
     }
 
     g_object_unref(doc1);
     g_object_unref(doc2);
 
-    return are_same ? 0 : 1;
+    return retval;
 }
