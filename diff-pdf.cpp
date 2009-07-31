@@ -322,6 +322,8 @@ public:
         else
             m_viewer->Set(img1);
 
+        m_viewer->SetBestFitZoom();
+
         if ( img1 )
             cairo_surface_destroy(img1);
         if ( img2 )
@@ -369,6 +371,10 @@ public:
         // like in LMI, maximize the window
         tlw->Maximize();
         tlw->Show();
+
+        // yield so that size changes above take effect immediately (and so we
+        // can query the window for its size)
+        Yield();
 
         tlw->SetDocs(m_doc1, m_doc2);
 

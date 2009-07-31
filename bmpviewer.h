@@ -19,6 +19,24 @@ public:
     void Set(const wxImage& image);
     void Set(cairo_surface_t *surface);
 
+    float GetZoom() const
+    {
+        return m_zoom_factor;
+    }
+
+    void SetZoom(float factor)
+    {
+        m_zoom_factor = factor;
+        UpdateBitmap();
+    }
+
+    // sets the zoom value to "best fit" for current window size
+    void SetBestFitZoom();
+
+private:
+    // update the content after some change (bitmap, zoom factor, ...)
+    void UpdateBitmap();
+
 private:
     wxStaticBitmap *m_content;
     wxImage m_orig_image;

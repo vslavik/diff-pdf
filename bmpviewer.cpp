@@ -18,24 +18,41 @@ BitmapViewer::BitmapViewer(wxWindow *parent)
 }
 
 
-void BitmapViewer::Set(const wxImage& image)
+void BitmapViewer::SetBestFitZoom()
 {
-    m_orig_image = image;
+    // compute highest scale factor that still doesn't need scrollbars:
 
-    int new_w = int(image.GetWidth() * m_zoom_factor);
-    int new_h = int(image.GetHeight() * m_zoom_factor);
+    float scale_x = float(GetSize().x) / float(m_orig_image.GetWidth());
+    float scale_y = float(GetSize().y) / float(m_orig_image.GetHeight());
 
-    if ( new_w != image.GetWidth() || new_h != image.GetHeight() )
+    SetZoom(std::min(scale_x, scale_y));
+}
+
+
+void BitmapViewer::UpdateBitmap()
+{
+    int new_w = int(m_orig_image.GetWidth() * m_zoom_factor);
+    int new_h = int(m_orig_image.GetHeight() * m_zoom_factor);
+
+    if ( new_w != m_orig_image.GetWidth() ||
+         new_h != m_orig_image.GetHeight() )
     {
-        wxImage scaled(image.Scale(new_w, new_h, wxIMAGE_QUALITY_HIGH));
+        wxImage scaled(m_orig_image.Scale(new_w, new_h, wxIMAGE_QUALITY_HIGH));
         m_content->SetBitmap(wxBitmap(scaled));
     }
     else
     {
-        m_content->SetBitmap(wxBitmap(image));
+        m_content->SetBitmap(wxBitmap(m_orig_image));
     }
 
     GetSizer()->FitInside(this);
+}
+
+
+void BitmapViewer::Set(const wxImage& image)
+{
+    m_orig_image = image;
+    UpdateBitmap();
 }
 
 
