@@ -17,6 +17,8 @@
 #include <wx/log.h>
 #include <wx/frame.h>
 #include <wx/sizer.h>
+#include <wx/toolbar.h>
+#include <wx/artprov.h>
 
 // ------------------------------------------------------------------------
 // PDF rendering functions
@@ -260,6 +262,9 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
 // wxWidgets GUI
 // ------------------------------------------------------------------------
 
+const int ID_PREV_PAGE = wxNewId();
+const int ID_NEXT_PAGE = wxNewId();
+
 class DiffFrame : public wxFrame
 {
 public:
@@ -269,7 +274,21 @@ public:
         m_cur_page = -1;
 
         CreateStatusBar();
-        CreateToolBar();
+
+        wxToolBar *toolbar =
+            new wxToolBar
+                (
+                    this, wxID_ANY,
+                    wxDefaultPosition, wxDefaultSize,
+                    wxTB_HORIZONTAL | wxTB_FLAT | wxTB_HORZ_TEXT
+                );
+        toolbar->AddTool(ID_PREV_PAGE,
+                         wxT("Previous"),
+                         wxArtProvider::GetBitmap(wxART_GO_BACK, wxART_TOOLBAR));
+        toolbar->AddTool(ID_NEXT_PAGE,
+                         wxT("Next"),
+                         wxArtProvider::GetBitmap(wxART_GO_FORWARD, wxART_TOOLBAR));
+        SetToolBar(toolbar);
 
         m_viewer = new BitmapViewer(this);
 
@@ -301,6 +320,8 @@ public:
 
     void GoToPage(int n)
     {
+        wxBusyCursor wait;
+
         m_cur_page = n;
 
         const int pages1 = poppler_document_get_n_pages(m_doc1);
@@ -334,7 +355,6 @@ public:
         UpdateStatus();
     }
 
-
 private:
     void UpdateStatus()
     {
@@ -351,6 +371,28 @@ private:
         );
     }
 
+    void OnPrevPage(wxCommandEvent&)
+    {
+        GoToPage(m_cur_page - 1);
+    }
+
+    void OnNextPage(wxCommandEvent&)
+    {
+        GoToPage(m_cur_page + 1);
+    }
+
+    void OnUpdatePrevPage(wxUpdateUIEvent& event)
+    {
+        event.Enable(m_cur_page > 0);
+    }
+
+    void OnUpdateNextPage(wxUpdateUIEvent& event)
+    {
+        event.Enable(m_cur_page < m_pages.size() - 1);
+    }
+
+    DECLARE_EVENT_TABLE()
+
 private:
     BitmapViewer *m_viewer;
     PopplerDocument *m_doc1, *m_doc2;
@@ -359,6 +401,12 @@ private:
     int m_cur_page;
 };
 
+BEGIN_EVENT_TABLE(DiffFrame, wxFrame)
+    EVT_TOOL     (ID_PREV_PAGE, DiffFrame::OnPrevPage)
+    EVT_TOOL     (ID_NEXT_PAGE, DiffFrame::OnNextPage)
+    EVT_UPDATE_UI(ID_PREV_PAGE, DiffFrame::OnUpdatePrevPage)
+    EVT_UPDATE_UI(ID_NEXT_PAGE, DiffFrame::OnUpdateNextPage)
+END_EVENT_TABLE()
 
 
 class DiffPdfApp : public wxApp
