@@ -316,6 +316,7 @@ public:
         }
 
         GoToPage(0);
+        m_viewer->SetBestFitZoom();
     }
 
     void GoToPage(int n)
@@ -342,8 +343,6 @@ public:
             m_viewer->Set(diff);
         else
             m_viewer->Set(img1);
-
-        m_viewer->SetBestFitZoom();
 
         if ( img1 )
             cairo_surface_destroy(img1);
