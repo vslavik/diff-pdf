@@ -264,6 +264,20 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
 
 const int ID_PREV_PAGE = wxNewId();
 const int ID_NEXT_PAGE = wxNewId();
+const int ID_ZOOM_IN = wxNewId();
+const int ID_ZOOM_OUT = wxNewId();
+
+#define BMP_ARTPROV(id) wxArtProvider::GetBitmap(id, wxART_TOOLBAR)
+
+#define BMP_PREV_PAGE     BMP_ARTPROV(wxART_GO_BACK)
+#define BMP_NEXT_PAGE     BMP_ARTPROV(wxART_GO_FORWARD)
+
+#ifdef __WXGTK__
+    #define BMP_ZOOM_IN   BMP_ARTPROV(wxT("gtk-zoom-in"))
+    #define BMP_ZOOM_OUT  BMP_ARTPROV(wxT("gtk-zoom-out"))
+#else
+#endif
+
 
 class DiffFrame : public wxFrame
 {
@@ -273,7 +287,10 @@ public:
     {
         m_cur_page = -1;
 
-        CreateStatusBar();
+        CreateStatusBar(2);
+        SetStatusBarPane(0);
+        const int stat_widths[] = { -1, 80 };
+        SetStatusWidths(2, stat_widths);
 
         wxToolBar *toolbar =
             new wxToolBar
@@ -282,12 +299,11 @@ public:
                     wxDefaultPosition, wxDefaultSize,
                     wxTB_HORIZONTAL | wxTB_FLAT | wxTB_HORZ_TEXT
                 );
-        toolbar->AddTool(ID_PREV_PAGE,
-                         wxT("Previous"),
-                         wxArtProvider::GetBitmap(wxART_GO_BACK, wxART_TOOLBAR));
-        toolbar->AddTool(ID_NEXT_PAGE,
-                         wxT("Next"),
-                         wxArtProvider::GetBitmap(wxART_GO_FORWARD, wxART_TOOLBAR));
+        toolbar->AddTool(ID_PREV_PAGE, wxT("Previous"), BMP_PREV_PAGE);
+        toolbar->AddTool(ID_NEXT_PAGE, wxT("Next"), BMP_NEXT_PAGE);
+        toolbar->AddTool(ID_ZOOM_IN, wxT("Zoom in"), BMP_ZOOM_IN);
+        toolbar->AddTool(ID_ZOOM_OUT, wxT("Zoom out"), BMP_ZOOM_OUT);
+
         SetToolBar(toolbar);
 
         m_viewer = new BitmapViewer(this);
@@ -316,7 +332,9 @@ public:
         }
 
         GoToPage(0);
+
         m_viewer->SetBestFitZoom();
+        UpdateStatus();
     }
 
     void GoToPage(int n)
@@ -355,6 +373,8 @@ public:
     }
 
 private:
+    static const float ZOOM_FACTOR_STEP = 1.2;
+
     void UpdateStatus()
     {
         SetStatusText
@@ -366,7 +386,14 @@ private:
                 m_pages.size(),
                 m_diff_count,
                 m_pages[m_cur_page] ? wxT("differs") : wxT("is unchanged")
-            )
+            ),
+            0
+        );
+
+        SetStatusText
+        (
+            wxString::Format(wxT("%.1f%%"), m_viewer->GetZoom() * 100.0),
+            1
         );
     }
 
@@ -390,6 +417,20 @@ private:
         event.Enable(m_cur_page < m_pages.size() - 1);
     }
 
+    void OnZoomIn(wxCommandEvent&)
+    {
+        wxBusyCursor wait;
+        m_viewer->SetZoom(m_viewer->GetZoom() * ZOOM_FACTOR_STEP);
+        UpdateStatus();
+    }
+
+    void OnZoomOut(wxCommandEvent&)
+    {
+        wxBusyCursor wait;
+        m_viewer->SetZoom(m_viewer->GetZoom() / ZOOM_FACTOR_STEP);
+        UpdateStatus();
+    }
+
     DECLARE_EVENT_TABLE()
 
 private:
@@ -405,6 +446,8 @@ BEGIN_EVENT_TABLE(DiffFrame, wxFrame)
     EVT_TOOL     (ID_NEXT_PAGE, DiffFrame::OnNextPage)
     EVT_UPDATE_UI(ID_PREV_PAGE, DiffFrame::OnUpdatePrevPage)
     EVT_UPDATE_UI(ID_NEXT_PAGE, DiffFrame::OnUpdateNextPage)
+    EVT_TOOL     (ID_ZOOM_IN, DiffFrame::OnZoomIn)
+    EVT_TOOL     (ID_ZOOM_OUT, DiffFrame::OnZoomOut)
 END_EVENT_TABLE()
 
 
