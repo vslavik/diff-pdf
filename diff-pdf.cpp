@@ -64,80 +64,103 @@ cairo_surface_t *render_page(PopplerPage *page)
 }
 
 
-cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2)
+// Creates image of differences between s1 and s2. If the offset is specified,
+// then s2 is displaced by it.
+cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
+                             int offset_x = 0, int offset_y = 0)
 {
     assert( s1 || s2 );
 
-    const int width = cairo_image_surface_get_width(s1 ? s1 : s2);
-    const int height = cairo_image_surface_get_height(s1 ? s1 : s2);
+    wxRect r1, r2;
 
-    // FIXME: handle pages of different sizes
-    assert( width == cairo_image_surface_get_width(s2) );
-    assert( height == cairo_image_surface_get_height(s2) );
-
-
-    // deal with pages present in only one document first, by creating a dummy
-    // page for this case
-    cairo_surface_t *dummy = NULL;
-    if ( !s1 || !s2 )
+    if ( s1 )
     {
-        dummy = cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
-
-        // clear the surface to white background:
-        cairo_t *cr = cairo_create(dummy);
-        cairo_set_source_rgb(cr, 1, 1, 1);
-        cairo_rectangle(cr, 0, 0, width, height);
-        cairo_fill(cr);
-        cairo_destroy(cr);
-
-        if ( !s1 )
-            s1 = dummy;
-        if ( !s2 )
-            s2 = dummy;
+        r1 = wxRect(0, 0,
+                    cairo_image_surface_get_width(s1),
+                    cairo_image_surface_get_height(s1));
+    }
+    if ( s2 )
+    {
+        r2 = wxRect(offset_x, offset_y,
+                    cairo_image_surface_get_width(s2),
+                    cairo_image_surface_get_height(s2));
     }
 
+    // compute union rectangle starting at [0,0] position
+    wxRect rdiff(r1);
+    rdiff.Union(r2);
+    r1.Offset(-rdiff.x, -rdiff.y);
+    r2.Offset(-rdiff.x, -rdiff.y);
+    rdiff.Offset(-rdiff.x, -rdiff.y);
 
     bool changes = false;
 
     cairo_surface_t *diff =
-        cairo_image_surface_create(CAIRO_FORMAT_RGB24, width, height);
+        cairo_image_surface_create(CAIRO_FORMAT_RGB24, rdiff.width, rdiff.height);
 
-    const int stride1 = cairo_image_surface_get_stride(s1);
-    const int stride2 = cairo_image_surface_get_stride(s2);
+    // clear the surface to white background if the merged images don't fully
+    // overlap:
+    if ( r1 != r2 )
+    {
+        changes = true;
+
+        cairo_t *cr = cairo_create(diff);
+        cairo_set_source_rgb(cr, 1, 1, 1);
+        cairo_rectangle(cr, 0, 0, rdiff.width, rdiff.height);
+        cairo_fill(cr);
+        cairo_destroy(cr);
+    }
+
+    const int stride1 = s1 ? cairo_image_surface_get_stride(s1) : 0;
+    const int stride2 = s2 ? cairo_image_surface_get_stride(s2) : 0;
     const int stridediff = cairo_image_surface_get_stride(diff);
 
-    const unsigned char *data1 = cairo_image_surface_get_data(s1);
-    const unsigned char *data2 = cairo_image_surface_get_data(s2);
+    const unsigned char *data1 = s1 ? cairo_image_surface_get_data(s1) : NULL;
+    const unsigned char *data2 = s2 ? cairo_image_surface_get_data(s2) : NULL;
     unsigned char *datadiff = cairo_image_surface_get_data(diff);
 
-    for ( int y = 0;
-          y < height;
-          y++, data1 += stride1, data2 += stride2, datadiff += stridediff )
+    // we visualize the differences by taking one channel from s1
+    // and the other two channels from s2:
+
+    // first, copy s1 over:
+    if ( s1 )
     {
-        for ( int x = 0; x < width * 4; x += 4 )
+        unsigned char *out = datadiff + r1.y * stridediff + r1.x * 4;
+        for ( int y = 0;
+              y < r1.height;
+              y++, data1 += stride1, out += stridediff )
         {
-            unsigned char r1 = *(data1 + x + 0);
-            unsigned char g1 = *(data1 + x + 1);
-            unsigned char b1 = *(data1 + x + 2);
-
-            unsigned char r2 = *(data2 + x + 0);
-            unsigned char g2 = *(data2 + x + 1);
-            unsigned char b2 = *(data2 + x + 2);
-
-            if ( r1 != r2 || g1 != g2 || b1 != b2 )
-                changes = true;
-
-
-            // we visualize the differences by taking one channel from s1
-            // and the other two channels from s2
-            *(datadiff + x + 0) = r1;
-            *(datadiff + x + 1) = g1;
-            *(datadiff + x + 2) = b2;
+            memcpy(out, data1, r1.width * 4);
         }
     }
 
-    if ( dummy )
-        cairo_surface_destroy(dummy);
+    // then, copy B channel from s2 over it; also compare the two versions
+    // to see if there are any differences:
+    if ( s2 )
+    {
+        unsigned char *out = datadiff + r2.y * stridediff + r2.x * 4;
+        for ( int y = 0;
+              y < r2.height;
+              y++, data2 += stride2, out += stridediff )
+        {
+            for ( int x = 0; x < r2.width * 4; x += 4 )
+            {
+                unsigned char r1 = *(out + x + 0);
+                unsigned char g1 = *(out + x + 1);
+                unsigned char b1 = *(out + x + 2);
+
+                unsigned char r2 = *(data2 + x + 0);
+                unsigned char g2 = *(data2 + x + 1);
+                unsigned char b2 = *(data2 + x + 2);
+
+                if ( r1 != r2 || g1 != g2 || b1 != b2 )
+                    changes = true;
+
+                // change the B channel to be from s2; RG will be s1
+                *(out + x + 2) = b2;
+            }
+        }
+    }
 
     if ( changes )
     {
@@ -266,15 +289,25 @@ const int ID_PREV_PAGE = wxNewId();
 const int ID_NEXT_PAGE = wxNewId();
 const int ID_ZOOM_IN = wxNewId();
 const int ID_ZOOM_OUT = wxNewId();
+const int ID_OFFSET_LEFT = wxNewId();
+const int ID_OFFSET_RIGHT = wxNewId();
+const int ID_OFFSET_UP = wxNewId();
+const int ID_OFFSET_DOWN = wxNewId();
+
 
 #define BMP_ARTPROV(id) wxArtProvider::GetBitmap(id, wxART_TOOLBAR)
 
-#define BMP_PREV_PAGE     BMP_ARTPROV(wxART_GO_BACK)
-#define BMP_NEXT_PAGE     BMP_ARTPROV(wxART_GO_FORWARD)
+#define BMP_PREV_PAGE      BMP_ARTPROV(wxART_GO_BACK)
+#define BMP_NEXT_PAGE      BMP_ARTPROV(wxART_GO_FORWARD)
+
+#define BMP_OFFSET_LEFT    BMP_ARTPROV(wxART_GO_BACK)
+#define BMP_OFFSET_RIGHT   BMP_ARTPROV(wxART_GO_FORWARD)
+#define BMP_OFFSET_UP      BMP_ARTPROV(wxART_GO_UP)
+#define BMP_OFFSET_DOWN    BMP_ARTPROV(wxART_GO_DOWN)
 
 #ifdef __WXGTK__
-    #define BMP_ZOOM_IN   BMP_ARTPROV(wxT("gtk-zoom-in"))
-    #define BMP_ZOOM_OUT  BMP_ARTPROV(wxT("gtk-zoom-out"))
+    #define BMP_ZOOM_IN    BMP_ARTPROV(wxT("gtk-zoom-in"))
+    #define BMP_ZOOM_OUT   BMP_ARTPROV(wxT("gtk-zoom-out"))
 #else
 #endif
 
@@ -289,7 +322,7 @@ public:
 
         CreateStatusBar(2);
         SetStatusBarPane(0);
-        const int stat_widths[] = { -1, 80 };
+        const int stat_widths[] = { -1, 150 };
         SetStatusWidths(2, stat_widths);
 
         wxToolBar *toolbar =
@@ -303,6 +336,10 @@ public:
         toolbar->AddTool(ID_NEXT_PAGE, wxT("Next"), BMP_NEXT_PAGE);
         toolbar->AddTool(ID_ZOOM_IN, wxT("Zoom in"), BMP_ZOOM_IN);
         toolbar->AddTool(ID_ZOOM_OUT, wxT("Zoom out"), BMP_ZOOM_OUT);
+        toolbar->AddTool(ID_OFFSET_LEFT, wxT(""), BMP_OFFSET_LEFT);
+        toolbar->AddTool(ID_OFFSET_RIGHT, wxT(""), BMP_OFFSET_RIGHT);
+        toolbar->AddTool(ID_OFFSET_UP, wxT(""), BMP_OFFSET_UP);
+        toolbar->AddTool(ID_OFFSET_DOWN, wxT(""), BMP_OFFSET_DOWN);
 
         SetToolBar(toolbar);
 
@@ -339,23 +376,30 @@ public:
 
     void GoToPage(int n)
     {
-        wxBusyCursor wait;
-
         m_cur_page = n;
+        DoUpdatePage();
+    }
+
+private:
+    static const float ZOOM_FACTOR_STEP = 1.2;
+
+    void DoUpdatePage()
+    {
+        wxBusyCursor wait;
 
         const int pages1 = poppler_document_get_n_pages(m_doc1);
         const int pages2 = poppler_document_get_n_pages(m_doc2);
 
-        PopplerPage *page1 = n < pages1
-                             ? poppler_document_get_page(m_doc1, n)
+        PopplerPage *page1 = m_cur_page < pages1
+                             ? poppler_document_get_page(m_doc1, m_cur_page)
                              : NULL;
-        PopplerPage *page2 = n < pages2
-                             ? poppler_document_get_page(m_doc2, n)
+        PopplerPage *page2 = m_cur_page < pages2
+                             ? poppler_document_get_page(m_doc2, m_cur_page)
                              : NULL;
 
         cairo_surface_t *img1 = page1 ? render_page(page1) : NULL;
         cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
-        cairo_surface_t *diff = diff_images(img1, img2);
+        cairo_surface_t *diff = diff_images(img1, img2, m_offset.x, m_offset.y);
 
         if ( diff )
             m_viewer->Set(diff);
@@ -371,9 +415,6 @@ public:
 
         UpdateStatus();
     }
-
-private:
-    static const float ZOOM_FACTOR_STEP = 1.2;
 
     void UpdateStatus()
     {
@@ -392,7 +433,12 @@ private:
 
         SetStatusText
         (
-            wxString::Format(wxT("%.1f%%"), m_viewer->GetZoom() * 100.0),
+            wxString::Format
+            (
+                wxT("%.1f%% [offset %d,%d]"),
+                m_viewer->GetZoom() * 100.0,
+                m_offset.x, m_offset.y
+            ),
             1
         );
     }
@@ -431,6 +477,18 @@ private:
         UpdateStatus();
     }
 
+    void DoOffset(int x, int y)
+    {
+        m_offset.x += x;
+        m_offset.y += y;
+        DoUpdatePage();
+    }
+
+    void OnOffsetLeft(wxCommandEvent&) { DoOffset(-1, 0); }
+    void OnOffsetRight(wxCommandEvent&) { DoOffset(1, 0); }
+    void OnOffsetUp(wxCommandEvent&) { DoOffset(0, -1); }
+    void OnOffsetDown(wxCommandEvent&) { DoOffset(0, 1); }
+
     DECLARE_EVENT_TABLE()
 
 private:
@@ -439,15 +497,20 @@ private:
     std::vector<bool> m_pages;
     int m_diff_count;
     int m_cur_page;
+    wxPoint m_offset;
 };
 
 BEGIN_EVENT_TABLE(DiffFrame, wxFrame)
-    EVT_TOOL     (ID_PREV_PAGE, DiffFrame::OnPrevPage)
-    EVT_TOOL     (ID_NEXT_PAGE, DiffFrame::OnNextPage)
-    EVT_UPDATE_UI(ID_PREV_PAGE, DiffFrame::OnUpdatePrevPage)
-    EVT_UPDATE_UI(ID_NEXT_PAGE, DiffFrame::OnUpdateNextPage)
-    EVT_TOOL     (ID_ZOOM_IN, DiffFrame::OnZoomIn)
-    EVT_TOOL     (ID_ZOOM_OUT, DiffFrame::OnZoomOut)
+    EVT_TOOL     (ID_PREV_PAGE,    DiffFrame::OnPrevPage)
+    EVT_TOOL     (ID_NEXT_PAGE,    DiffFrame::OnNextPage)
+    EVT_UPDATE_UI(ID_PREV_PAGE,    DiffFrame::OnUpdatePrevPage)
+    EVT_UPDATE_UI(ID_NEXT_PAGE,    DiffFrame::OnUpdateNextPage)
+    EVT_TOOL     (ID_ZOOM_IN,      DiffFrame::OnZoomIn)
+    EVT_TOOL     (ID_ZOOM_OUT,     DiffFrame::OnZoomOut)
+    EVT_TOOL     (ID_OFFSET_LEFT,  DiffFrame::OnOffsetLeft)
+    EVT_TOOL     (ID_OFFSET_RIGHT, DiffFrame::OnOffsetRight)
+    EVT_TOOL     (ID_OFFSET_UP,    DiffFrame::OnOffsetUp)
+    EVT_TOOL     (ID_OFFSET_DOWN,  DiffFrame::OnOffsetDown)
 END_EVENT_TABLE()
 
 
