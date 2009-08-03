@@ -332,18 +332,41 @@ public:
                     wxDefaultPosition, wxDefaultSize,
                     wxTB_HORIZONTAL | wxTB_FLAT | wxTB_HORZ_TEXT
                 );
-        toolbar->AddTool(ID_PREV_PAGE, wxT("Previous"), BMP_PREV_PAGE);
-        toolbar->AddTool(ID_NEXT_PAGE, wxT("Next"), BMP_NEXT_PAGE);
-        toolbar->AddTool(ID_ZOOM_IN, wxT("Zoom in"), BMP_ZOOM_IN);
-        toolbar->AddTool(ID_ZOOM_OUT, wxT("Zoom out"), BMP_ZOOM_OUT);
-        toolbar->AddTool(ID_OFFSET_LEFT, wxT(""), BMP_OFFSET_LEFT);
-        toolbar->AddTool(ID_OFFSET_RIGHT, wxT(""), BMP_OFFSET_RIGHT);
-        toolbar->AddTool(ID_OFFSET_UP, wxT(""), BMP_OFFSET_UP);
-        toolbar->AddTool(ID_OFFSET_DOWN, wxT(""), BMP_OFFSET_DOWN);
+
+        toolbar->AddTool(ID_PREV_PAGE, wxT("Previous"), BMP_PREV_PAGE,
+                         wxT("Go to previous page (PgUp)"));
+        toolbar->AddTool(ID_NEXT_PAGE, wxT("Next"), BMP_NEXT_PAGE,
+                         wxT("Go to next page (PgDown)"));
+        toolbar->AddTool(ID_ZOOM_IN, wxT("Zoom in"), BMP_ZOOM_IN,
+                         wxT("Make the page larger (Ctrl +)"));
+        toolbar->AddTool(ID_ZOOM_OUT, wxT("Zoom out"), BMP_ZOOM_OUT,
+                         wxT("Make the page smaller (Ctrl -)"));
+        toolbar->AddTool(ID_OFFSET_LEFT, wxT(""), BMP_OFFSET_LEFT,
+                         wxT("Offset one of the pages to the left (Ctrl left)"));
+        toolbar->AddTool(ID_OFFSET_RIGHT, wxT(""), BMP_OFFSET_RIGHT,
+                         wxT("Offset one of the pages to the right (Ctrl right)"));
+        toolbar->AddTool(ID_OFFSET_UP, wxT(""), BMP_OFFSET_UP,
+                         wxT("Offset one of the pages up (Ctrl up)"));
+        toolbar->AddTool(ID_OFFSET_DOWN, wxT(""), BMP_OFFSET_DOWN,
+                         wxT("Offset one of the pages down (Ctrl down)"));
 
         SetToolBar(toolbar);
 
+        wxAcceleratorEntry accels[8];
+        accels[0].Set(wxACCEL_NORMAL, WXK_PAGEUP, ID_PREV_PAGE);
+        accels[1].Set(wxACCEL_NORMAL, WXK_PAGEDOWN, ID_NEXT_PAGE);
+        accels[2].Set(wxACCEL_CTRL, (int)'=', ID_ZOOM_IN);
+        accels[3].Set(wxACCEL_CTRL, (int)'-', ID_ZOOM_OUT);
+        accels[4].Set(wxACCEL_CTRL, WXK_LEFT, ID_OFFSET_LEFT);
+        accels[5].Set(wxACCEL_CTRL, WXK_RIGHT, ID_OFFSET_RIGHT);
+        accels[6].Set(wxACCEL_CTRL, WXK_UP, ID_OFFSET_UP);
+        accels[7].Set(wxACCEL_CTRL, WXK_DOWN, ID_OFFSET_DOWN);
+
+        wxAcceleratorTable accel_table(8, accels);
+        SetAcceleratorTable(accel_table);
+
         m_viewer = new BitmapViewer(this);
+        m_viewer->SetFocus();
 
         wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
         sizer->Add(m_viewer, wxSizerFlags(1).Expand());
