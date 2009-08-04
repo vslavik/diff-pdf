@@ -4,7 +4,10 @@
 #include <wx/sizer.h>
 
 BitmapViewer::BitmapViewer(wxWindow *parent)
-    : wxScrolledWindow(parent)
+    : wxScrolledWindow(parent,
+                       wxID_ANY,
+                       wxDefaultPosition, wxDefaultSize,
+                       wxFULL_REPAINT_ON_RESIZE)
 {
     m_zoom_factor = 1.0;
 
