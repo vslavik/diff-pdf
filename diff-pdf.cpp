@@ -472,12 +472,14 @@ private:
 
     void OnPrevPage(wxCommandEvent&)
     {
-        GoToPage(m_cur_page - 1);
+        if ( m_cur_page > 0 )
+            GoToPage(m_cur_page - 1);
     }
 
     void OnNextPage(wxCommandEvent&)
     {
-        GoToPage(m_cur_page + 1);
+        if ( m_cur_page < m_pages.size() - 1 )
+            GoToPage(m_cur_page + 1);
     }
 
     void OnUpdatePrevPage(wxUpdateUIEvent& event)
