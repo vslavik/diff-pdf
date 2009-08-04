@@ -309,6 +309,10 @@ const int ID_OFFSET_DOWN = wxNewId();
     #define BMP_ZOOM_IN    BMP_ARTPROV(wxT("gtk-zoom-in"))
     #define BMP_ZOOM_OUT   BMP_ARTPROV(wxT("gtk-zoom-out"))
 #else
+    #include "gtk-zoom-in.xpm"
+    #include "gtk-zoom-out.xpm"
+    #define BMP_ZOOM_IN    wxBitmap(gtk_zoom_in_xpm)
+    #define BMP_ZOOM_OUT   wxBitmap(gtk_zoom_out_xpm)
 #endif
 
 
