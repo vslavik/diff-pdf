@@ -354,6 +354,7 @@ public:
         toolbar->AddTool(ID_OFFSET_DOWN, wxT(""), BMP_OFFSET_DOWN,
                          wxT("Offset one of the pages down (Ctrl down)"));
 
+        toolbar->Realize();
         SetToolBar(toolbar);
 
         wxAcceleratorEntry accels[8];
