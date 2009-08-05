@@ -1,0 +1,46 @@
+
+  0. Usage
+============
+
+diff-pdf is a tool for visually comparing two PDFs.
+
+It takes two PDF files as arguments. By default, its only output is its return
+code, which is 0 if there are no differences and 1 if the two PDFs differ. If
+given the --pdf option, it produces a PDF file with visually highlighted
+differences:
+
+   $ diff-pdf --pdf=diff.pdf a.pdf b.pdf
+
+Another option is to compare the two files visually in a simple GUI, using
+the --view argument:
+
+   $ diff-pdf --view a.pdf b.pdf
+
+This opens a window that lets you view the files' pages and zoom in on details.
+It is also possible to shift the two pages relatively to each other using
+Ctrl-arrows. This is useful for identifying translation-only differences.
+
+See the output of `diff-pdf --help` for complete list of options.
+
+
+
+  1. Compiling from sources
+=============================
+
+The build system uses Automake and so a Unix or Unix-like environment (Cygwin
+or MSYS) is required. Compilation is done in the usual way:
+
+   $ ./configure
+   $ make
+   $ make install
+
+As for dependencies, diff-pdf requires the following libraries:
+
+ * wxWidgets >= 2.8
+ * Cairo >= 1.4
+ * Poppler >= 0.10
+
+Note that many more libraries are required on Windows, where none of the
+libraries Cairo and Poppler use are normally available. At the time of writing,
+transitive cover of the above dependencies included fontconfig, freetype, glib,
+libpng, pixman, gettext, libiconv, libjpeg and zlib.
