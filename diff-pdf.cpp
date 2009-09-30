@@ -674,5 +674,9 @@ int main(int argc, char *argv[])
     g_object_unref(doc1);
     g_object_unref(doc2);
 
+    // MinGW doesn't reliably flush streams on exit, so flush them explicitly:
+    fflush(stdout);
+    fflush(stderr);
+
     return retval;
 }
