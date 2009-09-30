@@ -601,7 +601,7 @@ int main(int argc, char *argv[])
                   wxT("v"), wxT("verbose"), wxT("be verbose") },
 
         { wxCMD_LINE_OPTION,
-                  NULL, wxT("pdf"), wxT("output differences to given PDF file"),
+                  NULL, wxT("output-diff"), wxT("output differences to given PDF file"),
                   wxCMD_LINE_VAL_STRING },
 
         { wxCMD_LINE_SWITCH,
@@ -656,7 +656,7 @@ int main(int argc, char *argv[])
     int retval = 0;
 
     wxString pdf_file;
-    if ( parser.Found(wxT("pdf"), &pdf_file) )
+    if ( parser.Found(wxT("output-diff"), &pdf_file) )
     {
         retval = doc_compare(doc1, doc2, pdf_file.utf8_str(), NULL) ? 0 : 1;
     }
