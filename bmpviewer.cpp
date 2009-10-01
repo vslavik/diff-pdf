@@ -3,6 +3,13 @@
 
 #include <wx/sizer.h>
 
+BEGIN_EVENT_TABLE(BitmapViewer, wxScrolledWindow)
+    EVT_LEFT_DOWN(BitmapViewer::OnMouseDown)
+    EVT_LEFT_UP(BitmapViewer::OnMouseUp)
+    EVT_MOTION(BitmapViewer::OnMouseMove)
+    EVT_MOUSE_CAPTURE_LOST(BitmapViewer::OnMouseCaptureLost)
+END_EVENT_TABLE()
+
 BitmapViewer::BitmapViewer(wxWindow *parent)
     : wxScrolledWindow(parent,
                        wxID_ANY,
@@ -11,13 +18,23 @@ BitmapViewer::BitmapViewer(wxWindow *parent)
 {
     m_zoom_factor = 1.0;
 
-    SetScrollRate(10, 10);
+    SetScrollRate(1, 1);
 
     m_content = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap);
 
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(m_content, wxSizerFlags(1).Expand());
     SetSizer(sizer);
+
+    // we need to bind mouse-down event to m_content, as this scrolled window
+    // will never see mouse events otherwise
+    m_content->Connect
+               (
+                   wxEVT_LEFT_DOWN,
+                   wxMouseEventHandler(BitmapViewer::OnMouseDown),
+                   NULL,
+                   this
+               );
 }
 
 
@@ -90,4 +107,50 @@ void BitmapViewer::Set(cairo_surface_t *surface)
     }
 
     Set(img);
+}
+
+
+void BitmapViewer::OnMouseDown(wxMouseEvent& event)
+{
+    wxPoint view_origin;
+    GetViewStart(&view_origin.x, &view_origin.y);
+
+    const wxPoint pos = event.GetPosition();
+
+    m_draggingPage = true;
+    m_draggingLastMousePos = pos;
+    CaptureMouse();
+}
+
+
+void BitmapViewer::OnMouseUp(wxMouseEvent&)
+{
+    m_draggingPage = false;
+    ReleaseMouse();
+}
+
+
+void BitmapViewer::OnMouseMove(wxMouseEvent& event)
+{
+    event.Skip();
+
+    if ( !m_draggingPage )
+        return;
+
+    wxPoint view_origin;
+    GetViewStart(&view_origin.x, &view_origin.y);
+
+    const wxPoint pos = event.GetPosition();
+    wxPoint new_pos = view_origin + (m_draggingLastMousePos - pos);
+
+    Scroll(new_pos.x, new_pos.y);
+
+    m_draggingLastMousePos = pos;
+}
+
+
+void BitmapViewer::OnMouseCaptureLost(wxMouseCaptureLostEvent& event)
+{
+    m_draggingPage = false;
+    event.Skip();
 }
