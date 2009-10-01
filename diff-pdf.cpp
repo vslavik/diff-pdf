@@ -450,10 +450,11 @@ private:
         (
             wxString::Format
             (
-                wxT("Page %d of %d; %d of them are different, this page %s"),
+                wxT("Page %d of %d; %d of them %s different, this page %s"),
                 m_cur_page + 1 /* humans prefer 1-based counting*/,
                 m_pages.size(),
                 m_diff_count,
+                m_diff_count == 1 ? wxT("is") : wxT("are"),
                 m_pages[m_cur_page] ? wxT("differs") : wxT("is unchanged")
             ),
             0
