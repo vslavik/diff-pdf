@@ -44,3 +44,22 @@ Note that many more libraries are required on Windows, where none of the
 libraries Cairo and Poppler use are normally available. At the time of writing,
 transitive cover of the above dependencies included fontconfig, freetype, glib,
 libpng, pixman, gettext, libiconv, libjpeg and zlib.
+
+
+
+  2. Installing
+=================
+
+On Unix, the usual `make install` is sufficient.
+
+On Windows, the compiled diff-pdf.exe binary is almost self-contained. It will
+work from any place you with to copy it to. The only requirement is that the
+fonts/fonts.conf file must be included alongside it. It must be in "fonts"
+directory, just like in the source tree:
+
+   c:\
+       diff-pdf\
+           diff-pdf.exe
+           fonts\
+               fonts.conf
+
