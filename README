@@ -45,6 +45,10 @@ libraries Cairo and Poppler use are normally available. At the time of writing,
 transitive cover of the above dependencies included fontconfig, freetype, glib,
 libpng, pixman, gettext, libiconv, libjpeg and zlib.
 
+Precompiled version of the dependencies for Windows, built with MinGW, are
+available from http://github.com/vslavik/diff-pdf/downloads (wxWidgets is
+not included, as it supports MinGW well).
+
 
 
   2. Installing
