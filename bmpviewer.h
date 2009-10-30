@@ -28,6 +28,8 @@
 #include <wx/scrolwin.h>
 #include <wx/event.h>
 
+class Gutter;
+
 // widget for comfortable viewing of a bitmap, with high-quality zooming
 class BitmapViewer : public wxScrolledWindow
 {
@@ -52,6 +54,9 @@ public:
     // sets the zoom value to "best fit" for current window size
     void SetBestFitZoom();
 
+    // attaches a gutter that shows current scrolling position to the window
+    void AttachGutter(Gutter *g);
+
 private:
     // update the content after some change (bitmap, zoom factor, ...)
     void UpdateBitmap();
@@ -60,6 +65,8 @@ private:
     void OnMouseUp(wxMouseEvent& event);
     void OnMouseMove(wxMouseEvent& event);
     void OnMouseCaptureLost(wxMouseCaptureLostEvent& event);
+    void OnScrolling(wxScrollWinEvent& event);
+    void OnSizeChanged(wxSizeEvent& event);
 
 private:
     wxStaticBitmap *m_content;
@@ -69,6 +76,8 @@ private:
     // is the user currently dragging the page around with the mouse?
     bool m_draggingPage;
     wxPoint m_draggingLastMousePos;
+
+    Gutter *m_gutter;
 
     DECLARE_EVENT_TABLE()
 };

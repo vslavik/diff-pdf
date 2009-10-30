@@ -18,6 +18,7 @@
  */
 
 #include "bmpviewer.h"
+#include "gutter.h"
 
 #include <wx/sizer.h>
 
@@ -26,6 +27,8 @@ BEGIN_EVENT_TABLE(BitmapViewer, wxScrolledWindow)
     EVT_LEFT_UP(BitmapViewer::OnMouseUp)
     EVT_MOTION(BitmapViewer::OnMouseMove)
     EVT_MOUSE_CAPTURE_LOST(BitmapViewer::OnMouseCaptureLost)
+    EVT_SCROLLWIN(BitmapViewer::OnScrolling)
+    EVT_SIZE(BitmapViewer::OnSizeChanged)
 END_EVENT_TABLE()
 
 BitmapViewer::BitmapViewer(wxWindow *parent)
@@ -34,6 +37,7 @@ BitmapViewer::BitmapViewer(wxWindow *parent)
                        wxDefaultPosition, wxDefaultSize,
                        wxFULL_REPAINT_ON_RESIZE)
 {
+    m_gutter = NULL;
     m_zoom_factor = 1.0;
 
     SetScrollRate(1, 1);
@@ -89,6 +93,9 @@ void BitmapViewer::UpdateBitmap()
     }
 
     GetSizer()->FitInside(this);
+
+    if ( m_gutter )
+        m_gutter->UpdateViewPos(this);
 }
 
 
@@ -128,6 +135,14 @@ void BitmapViewer::Set(cairo_surface_t *surface)
 }
 
 
+void BitmapViewer::AttachGutter(Gutter *g)
+{
+    m_gutter = g;
+    if ( g )
+        g->UpdateViewPos(this);
+}
+
+
 void BitmapViewer::OnMouseDown(wxMouseEvent& event)
 {
     wxPoint view_origin;
@@ -162,6 +177,8 @@ void BitmapViewer::OnMouseMove(wxMouseEvent& event)
     wxPoint new_pos = view_origin + (m_draggingLastMousePos - pos);
 
     Scroll(new_pos.x, new_pos.y);
+    if ( m_gutter )
+        m_gutter->UpdateViewPos(this);
 
     m_draggingLastMousePos = pos;
 }
@@ -170,5 +187,22 @@ void BitmapViewer::OnMouseMove(wxMouseEvent& event)
 void BitmapViewer::OnMouseCaptureLost(wxMouseCaptureLostEvent& event)
 {
     m_draggingPage = false;
+    event.Skip();
+}
+
+
+void BitmapViewer::OnScrolling(wxScrollWinEvent& event)
+{
+    if ( m_gutter )
+        m_gutter->UpdateViewPos(this);
+
+    event.Skip();
+}
+
+void BitmapViewer::OnSizeChanged(wxSizeEvent& event)
+{
+    if ( m_gutter )
+        m_gutter->UpdateViewPos(this);
+
     event.Skip();
 }

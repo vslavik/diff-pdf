@@ -18,6 +18,7 @@
  */
 
 #include "bmpviewer.h"
+#include "gutter.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -85,7 +86,8 @@ cairo_surface_t *render_page(PopplerPage *page)
 // Creates image of differences between s1 and s2. If the offset is specified,
 // then s2 is displaced by it.
 cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
-                             int offset_x = 0, int offset_y = 0)
+                             int offset_x = 0, int offset_y = 0,
+                             wxImage *diff_map = NULL, int diff_map_width = -1)
 {
     assert( s1 || s2 );
 
@@ -115,6 +117,14 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
 
     cairo_surface_t *diff =
         cairo_image_surface_create(CAIRO_FORMAT_RGB24, rdiff.width, rdiff.height);
+
+    float diff_map_scale;
+    if ( diff_map )
+    {
+        diff_map_scale = float(diff_map_width) / float(rdiff.width);
+        diff_map->Create(diff_map_width, rdiff.height * diff_map_scale);
+        memset(diff_map->GetData(), 255, diff_map->GetWidth() * diff_map->GetHeight() * 3);
+    }
 
     // clear the surface to white background if the merged images don't fully
     // overlap:
@@ -163,19 +173,31 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
         {
             for ( int x = 0; x < r2.width * 4; x += 4 )
             {
-                unsigned char r1 = *(out + x + 0);
-                unsigned char g1 = *(out + x + 1);
-                unsigned char b1 = *(out + x + 2);
+                unsigned char cr1 = *(out + x + 0);
+                unsigned char cg1 = *(out + x + 1);
+                unsigned char cb1 = *(out + x + 2);
 
-                unsigned char r2 = *(data2 + x + 0);
-                unsigned char g2 = *(data2 + x + 1);
-                unsigned char b2 = *(data2 + x + 2);
+                unsigned char cr2 = *(data2 + x + 0);
+                unsigned char cg2 = *(data2 + x + 1);
+                unsigned char cb2 = *(data2 + x + 2);
 
-                if ( r1 != r2 || g1 != g2 || b1 != b2 )
+                if ( cr1 != cr2 || cg1 != cg2 || cb1 != cb2 )
+                {
                     changes = true;
+                    if ( diff_map )
+                    {
+                        // mark changes with red
+                        diff_map->SetRGB
+                                  (
+                                      (r2.x + x/4) * diff_map_scale,
+                                      (r2.y + y) * diff_map_scale,
+                                      255, 0, 0
+                                  );
+                    }
+                }
 
                 // change the B channel to be from s2; RG will be s1
-                *(out + x + 2) = b2;
+                *(out + x + 2) = cb2;
             }
         }
     }
@@ -388,10 +410,14 @@ public:
         wxAcceleratorTable accel_table(8, accels);
         SetAcceleratorTable(accel_table);
 
+        m_gutter = new Gutter(this);
+
         m_viewer = new BitmapViewer(this);
+        m_viewer->AttachGutter(m_gutter);
         m_viewer->SetFocus();
 
         wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
+        sizer->Add(m_gutter, wxSizerFlags().Border(wxALL, 2));
         sizer->Add(m_viewer, wxSizerFlags(1).Expand());
         SetSizer(sizer);
     }
@@ -445,12 +471,24 @@ private:
 
         cairo_surface_t *img1 = page1 ? render_page(page1) : NULL;
         cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
-        cairo_surface_t *diff = diff_images(img1, img2, m_offset.x, m_offset.y);
+
+        wxImage diff_map;
+        cairo_surface_t *diff = diff_images
+                                (
+                                    img1, img2,
+                                    m_offset.x, m_offset.y,
+                                    &diff_map, Gutter::WIDTH
+                                );
 
         if ( diff )
+        {
+            m_gutter->SetDiffMap(diff_map);
             m_viewer->Set(diff);
+        }
         else
+        {
             m_viewer->Set(img1);
+        }
 
         if ( img1 )
             cairo_surface_destroy(img1);
@@ -542,6 +580,7 @@ private:
 
 private:
     BitmapViewer *m_viewer;
+    Gutter *m_gutter;
     PopplerDocument *m_doc1, *m_doc2;
     std::vector<bool> m_pages;
     int m_diff_count;
