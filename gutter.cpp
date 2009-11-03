@@ -38,7 +38,11 @@ Gutter::Gutter(wxWindow *parent)
 void Gutter::SetDiffMap(const wxImage& image)
 {
     m_background = wxBitmap(image);
-    SetSize(image.GetWidth(), image.GetHeight());
+
+    wxSize sz(image.GetWidth(), image.GetHeight());
+    SetSize(sz);
+    SetMinSize(sz);
+
     Update();
 }
 
