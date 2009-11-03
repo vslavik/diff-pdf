@@ -123,7 +123,7 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
     {
         diff_map_scale = float(diff_map_width) / float(rdiff.width);
         diff_map->Create(diff_map_width, rdiff.height * diff_map_scale);
-        memset(diff_map->GetData(), 255, diff_map->GetWidth() * diff_map->GetHeight() * 3);
+        diff_map->SetRGB(wxRect(), 255, 255, 255);
     }
 
     // clear the surface to white background if the merged images don't fully
@@ -481,9 +481,16 @@ private:
                                 );
 
         if ( diff )
+        {
             m_viewer->Set(diff);
+        }
         else
+        {
             m_viewer->Set(img1);
+            // If there were no changes, indicate it by using green color
+            // for the (otherwise empty) gutter control:
+            diff_map.SetRGB(wxRect(), 170, 230, 130);
+        }
 
         // Always update the diff map. It will be all-white if there were
         // no differences.
