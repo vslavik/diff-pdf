@@ -122,7 +122,7 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
     if ( diff_map )
     {
         diff_map_scale = float(diff_map_width) / float(rdiff.width);
-        diff_map->Create(diff_map_width, rdiff.height * diff_map_scale);
+        diff_map->Create(diff_map_width, int(rdiff.height * diff_map_scale));
         diff_map->SetRGB(wxRect(), 255, 255, 255);
     }
 
@@ -189,8 +189,8 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                         // mark changes with red
                         diff_map->SetRGB
                                   (
-                                      (r2.x + x/4) * diff_map_scale,
-                                      (r2.y + y) * diff_map_scale,
+                                      int((r2.x + x/4) * diff_map_scale),
+                                      int((r2.y + y) * diff_map_scale),
                                       255, 0, 0
                                   );
                     }

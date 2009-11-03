@@ -58,10 +58,10 @@ void Gutter::UpdateViewPos(wxScrolledWindow *win)
     win->GetViewStart(&m_viewPos.x, &m_viewPos.y);
     win->GetClientSize(&m_viewPos.width, &m_viewPos.height);
 
-    m_viewPos.x *= scale_x;
-    m_viewPos.y *= scale_y;
-    m_viewPos.width *= scale_x;
-    m_viewPos.height *= scale_y;
+    m_viewPos.x = int(m_viewPos.x * scale_x);
+    m_viewPos.y = int(m_viewPos.y * scale_y);
+    m_viewPos.width = int(m_viewPos.width * scale_x);
+    m_viewPos.height = int(m_viewPos.height * scale_y);
 
     Refresh();
 }
