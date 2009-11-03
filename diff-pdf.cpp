@@ -481,14 +481,13 @@ private:
                                 );
 
         if ( diff )
-        {
-            m_gutter->SetDiffMap(diff_map);
             m_viewer->Set(diff);
-        }
         else
-        {
             m_viewer->Set(img1);
-        }
+
+        // Always update the diff map. It will be all-white if there were
+        // no differences.
+        m_gutter->SetDiffMap(diff_map);
 
         if ( img1 )
             cairo_surface_destroy(img1);
