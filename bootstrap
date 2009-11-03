@@ -42,6 +42,8 @@ if [ ! -f configure.ac -o ! -f Makefile.am ]; then
     exit 2
 fi
 
+mkdir -p admin
+
 # use --foreign with automake because we lack standard GNU NEWS and AUTHOR
 # files, if they're added we can "upgrade" to (default) GNU strictness. Use
 # --copy to allow simultaneous use on windows under mingw and cygwin platforms.
