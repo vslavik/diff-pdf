@@ -24,7 +24,7 @@
 #include <wx/window.h>
 #include <wx/bitmap.h>
 
-class wxScrolledWindow;
+class WXDLLIMPEXP_FWD_CORE wxScrolledWindow;
 
 // widget showing places of differences as well as scroll window's position
 class Gutter : public wxWindow
