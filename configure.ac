@@ -26,6 +26,8 @@ AC_CONFIG_AUX_DIR([admin])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
+
 dnl remember, "build" is where we compile, "host" is where the resulting
 dnl program runs (which may be different from "build" for cross-compilation)
 AC_CANONICAL_HOST
