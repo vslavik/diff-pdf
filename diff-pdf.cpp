@@ -216,9 +216,10 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
         {
             for ( int x = 0; x < rdiff.width * 4; x += 4 )
             {
-                *(out++) = *(in + x + 0);
-                *(out++) = *(in + x + 1);
+                // cairo_surface_t uses BGR order, wxImage has RGB
                 *(out++) = *(in + x + 2);
+                *(out++) = *(in + x + 1);
+                *(out++) = *(in + x + 0);
             }
         }
 
