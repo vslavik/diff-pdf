@@ -119,10 +119,13 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
         cairo_image_surface_create(CAIRO_FORMAT_RGB24, rdiff.width, rdiff.height);
 
     float thumbnail_scale;
+    int thumbnail_height;
+
     if ( thumbnail )
     {
         thumbnail_scale = float(thumbnail_width) / float(rdiff.width);
-        thumbnail->Create(thumbnail_width, int(rdiff.height * thumbnail_scale));
+        thumbnail_height = int(rdiff.height * thumbnail_scale);
+        thumbnail->Create(thumbnail_width, thumbnail_height);
         thumbnail->SetRGB(wxRect(), 255, 255, 255);
     }
 
@@ -198,6 +201,50 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
 
                 // change the B channel to be from s2; RG will be s1
                 *(out + x + 2) = cb2;
+            }
+        }
+    }
+
+    // add background image of the page to the thumbnails
+    if ( thumbnail )
+    {
+        // copy the 'diff' surface into wxImage:
+        wxImage bg(rdiff.width, rdiff.height);
+        unsigned char *in = datadiff;
+        unsigned char *out = bg.GetData();
+        for ( int y = 0; y < rdiff.height; y++, in += stridediff )
+        {
+            for ( int x = 0; x < rdiff.width * 4; x += 4 )
+            {
+                *(out++) = *(in + x + 0);
+                *(out++) = *(in + x + 1);
+                *(out++) = *(in + x + 2);
+            }
+        }
+
+        // scale it to thumbnail size:
+        bg.Rescale(thumbnail_width, thumbnail_height, wxIMAGE_QUALITY_HIGH);
+
+        // and merge with the diff markers in *thumbnail, making it much
+        // lighter in the process:
+        in = bg.GetData();
+        out = thumbnail->GetData();
+        for ( int i = thumbnail_width * thumbnail_height; i > 0; i-- )
+        {
+            if ( out[1] == 0 ) // G=0 ==> not white
+            {
+                // marked with red color, as place with differences -- don't
+                // paint background image here, make the red as visible as
+                // possible
+                out += 3;
+                in += 3;
+            }
+            else
+            {
+                // merge in lighter background image
+                *(out++) = 128 + *(in++) / 2;
+                *(out++) = 128 + *(in++) / 2;
+                *(out++) = 128 + *(in++) / 2;
             }
         }
     }
@@ -487,9 +534,17 @@ private:
         else
         {
             m_viewer->Set(img1);
-            // If there were no changes, indicate it by using green color
-            // for the (otherwise empty) gutter control:
-            thumbnail.SetRGB(wxRect(), 170, 230, 130);
+            // If there were no changes, indicate it by using green
+            // (170,230,130) color for the thumbnail in gutter control:
+            unsigned char *data = thumbnail.GetData();
+            for ( int i = thumbnail.GetWidth() * thumbnail.GetHeight();
+                  i > 0;
+                  i--, data += 3 )
+            {
+                data[0] = 170/2 + data[0] / 2;
+                data[1] = 230/2 + data[1] / 2;
+                data[2] = 130/2 + data[2] / 2;
+            }
         }
 
         // Always update the diff map. It will be all-white if there were
