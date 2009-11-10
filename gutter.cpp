@@ -35,7 +35,7 @@ Gutter::Gutter(wxWindow *parent)
 }
 
 
-void Gutter::SetDiffMap(const wxImage& image)
+void Gutter::SetThumbnail(const wxImage& image)
 {
     m_background = wxBitmap(image);
 

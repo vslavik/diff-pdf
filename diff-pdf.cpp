@@ -87,7 +87,7 @@ cairo_surface_t *render_page(PopplerPage *page)
 // then s2 is displaced by it.
 cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                              int offset_x = 0, int offset_y = 0,
-                             wxImage *diff_map = NULL, int diff_map_width = -1)
+                             wxImage *thumbnail = NULL, int thumbnail_width = -1)
 {
     assert( s1 || s2 );
 
@@ -118,12 +118,12 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
     cairo_surface_t *diff =
         cairo_image_surface_create(CAIRO_FORMAT_RGB24, rdiff.width, rdiff.height);
 
-    float diff_map_scale;
-    if ( diff_map )
+    float thumbnail_scale;
+    if ( thumbnail )
     {
-        diff_map_scale = float(diff_map_width) / float(rdiff.width);
-        diff_map->Create(diff_map_width, int(rdiff.height * diff_map_scale));
-        diff_map->SetRGB(wxRect(), 255, 255, 255);
+        thumbnail_scale = float(thumbnail_width) / float(rdiff.width);
+        thumbnail->Create(thumbnail_width, int(rdiff.height * thumbnail_scale));
+        thumbnail->SetRGB(wxRect(), 255, 255, 255);
     }
 
     // clear the surface to white background if the merged images don't fully
@@ -184,13 +184,13 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                 if ( cr1 != cr2 || cg1 != cg2 || cb1 != cb2 )
                 {
                     changes = true;
-                    if ( diff_map )
+                    if ( thumbnail )
                     {
                         // mark changes with red
-                        diff_map->SetRGB
+                        thumbnail->SetRGB
                                   (
-                                      int((r2.x + x/4) * diff_map_scale),
-                                      int((r2.y + y) * diff_map_scale),
+                                      int((r2.x + x/4) * thumbnail_scale),
+                                      int((r2.y + y) * thumbnail_scale),
                                       255, 0, 0
                                   );
                     }
@@ -472,12 +472,12 @@ private:
         cairo_surface_t *img1 = page1 ? render_page(page1) : NULL;
         cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
 
-        wxImage diff_map;
+        wxImage thumbnail;
         cairo_surface_t *diff = diff_images
                                 (
                                     img1, img2,
                                     m_offset.x, m_offset.y,
-                                    &diff_map, Gutter::WIDTH
+                                    &thumbnail, Gutter::WIDTH
                                 );
 
         if ( diff )
@@ -489,12 +489,12 @@ private:
             m_viewer->Set(img1);
             // If there were no changes, indicate it by using green color
             // for the (otherwise empty) gutter control:
-            diff_map.SetRGB(wxRect(), 170, 230, 130);
+            thumbnail.SetRGB(wxRect(), 170, 230, 130);
         }
 
         // Always update the diff map. It will be all-white if there were
         // no differences.
-        m_gutter->SetDiffMap(diff_map);
+        m_gutter->SetThumbnail(thumbnail);
 
         if ( img1 )
             cairo_surface_destroy(img1);

@@ -35,8 +35,8 @@ public:
 
     Gutter(wxWindow *parent);
 
-    // set the bitmap with differences to be shown
-    void SetDiffMap(const wxImage& image);
+    // Set the bitmap with thumbnail's background to be shown
+    void SetThumbnail(const wxImage& image);
 
     // Updates shown view position, i.e. the visible subset of scrolled window.
     // The gutter will indicate this area with a blue rectangle.
