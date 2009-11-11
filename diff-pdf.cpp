@@ -269,6 +269,7 @@ bool page_compare(cairo_t *cr_out,
     cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
 
     cairo_surface_t *diff = diff_images(img1, img2);
+    const bool has_diff = (diff != NULL);
 
     if ( diff && g_verbose )
         printf("page %d differs\n", page_index);
@@ -286,8 +287,6 @@ bool page_compare(cairo_t *cr_out,
             cairo_paint(cr_out);
 
             cairo_restore(cr_out);
-
-            cairo_surface_destroy(diff);
         }
         else
         {
@@ -301,12 +300,15 @@ bool page_compare(cairo_t *cr_out,
         cairo_show_page(cr_out);
     }
 
+    if ( diff )
+        cairo_surface_destroy(diff);
+
     if ( img1 )
         cairo_surface_destroy(img1);
     if ( img2 )
         cairo_surface_destroy(img2);
 
-    return diff == NULL;
+    return !has_diff;
 }
 
 
