@@ -38,6 +38,7 @@
 #include <wx/sizer.h>
 #include <wx/toolbar.h>
 #include <wx/artprov.h>
+#include <wx/progdlg.h>
 
 // ------------------------------------------------------------------------
 // PDF rendering functions
@@ -317,7 +318,8 @@ bool page_compare(cairo_t *cr_out,
 // into it.
 bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                  const char *pdf_output,
-                 std::vector<bool> *differences)
+                 std::vector<bool> *differences,
+                 wxProgressDialog *progress = NULL)
 {
     bool are_same = true;
 
@@ -346,6 +348,20 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
 
     for ( int page = 0; page < pages_total; page++ )
     {
+        if ( progress )
+        {
+            progress->Update
+                      (
+                          page,
+                          wxString::Format
+                          (
+                              _T("Comparing page %d of %d..."),
+                              page+1,
+                              pages_total
+                          )
+                       );
+        }
+
         PopplerPage *page1 = page < pages1
                              ? poppler_document_get_page(doc1, page)
                              : NULL;
@@ -474,12 +490,19 @@ public:
 
     void SetDocs(PopplerDocument *doc1, PopplerDocument *doc2)
     {
-        wxBusyCursor wait;
+        wxProgressDialog progress(_T("Comparing documents"),
+                                  _T("Comparing documents..."),
+                                  wxMax(poppler_document_get_n_pages(doc1),
+                                        poppler_document_get_n_pages(doc2)),
+                                  this,
+                                  wxPD_SMOOTH | wxPD_REMAINING_TIME);
 
         m_doc1 = doc1;
         m_doc2 = doc2;
 
-        doc_compare(m_doc1, m_doc2, NULL, &m_pages);
+        doc_compare(m_doc1, m_doc2, NULL, &m_pages, &progress);
+
+        progress.Pulse();
 
         m_diff_count = 0;
         for ( std::vector<bool>::const_iterator i = m_pages.begin();
@@ -492,8 +515,12 @@ public:
 
         GoToPage(0);
 
+        progress.Pulse();
+
         m_viewer->SetBestFitZoom();
         UpdateStatus();
+
+        progress.Hide();
     }
 
     void GoToPage(int n)
