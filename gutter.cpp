@@ -21,6 +21,7 @@
 
 #include <wx/dcclient.h>
 #include <wx/scrolwin.h>
+#include <wx/sizer.h>
 
 
 BEGIN_EVENT_TABLE(Gutter, wxWindow)
@@ -42,6 +43,7 @@ void Gutter::SetThumbnail(const wxImage& image)
     wxSize sz(image.GetWidth(), image.GetHeight());
     SetSize(sz);
     SetMinSize(sz);
+    GetParent()->GetSizer()->Layout();
 
     Update();
 }

@@ -79,12 +79,16 @@ void BitmapViewer::UpdateBitmap()
     if ( new_w != m_orig_image.GetWidth() ||
          new_h != m_orig_image.GetHeight() )
     {
-        // we don't need HQ filtering when upscaling
-        int quality = m_zoom_factor < 1.0
-                          ? wxIMAGE_QUALITY_HIGH
-                          : wxIMAGE_QUALITY_NORMAL;
-
-        wxImage scaled(m_orig_image.Scale(new_w, new_h, quality));
+        wxImage scaled =
+            m_orig_image.Scale
+                         (
+                             new_w,
+                             new_h,
+                             // we don't need HQ filtering when upscaling
+                             m_zoom_factor < 1.0
+                                ? wxIMAGE_QUALITY_HIGH
+                                : wxIMAGE_QUALITY_NORMAL
+                         );
         m_content->SetBitmap(wxBitmap(scaled));
     }
     else

@@ -31,6 +31,7 @@
 #include <cairo/cairo-pdf.h>
 
 #include <wx/app.h>
+#include <wx/evtloop.h>
 #include <wx/cmdline.h>
 #include <wx/filename.h>
 #include <wx/log.h>
@@ -490,15 +491,16 @@ public:
 
     void SetDocs(PopplerDocument *doc1, PopplerDocument *doc2)
     {
+        m_doc1 = doc1;
+        m_doc2 = doc2;
+
         wxProgressDialog progress(_T("Comparing documents"),
                                   _T("Comparing documents..."),
-                                  wxMax(poppler_document_get_n_pages(doc1),
-                                        poppler_document_get_n_pages(doc2)),
+                                  wxMax(poppler_document_get_n_pages(m_doc1),
+                                        poppler_document_get_n_pages(m_doc2)),
                                   this,
                                   wxPD_SMOOTH | wxPD_REMAINING_TIME);
 
-        m_doc1 = doc1;
-        m_doc2 = doc2;
 
         doc_compare(m_doc1, m_doc2, NULL, &m_pages, &progress);
 
@@ -696,19 +698,23 @@ END_EVENT_TABLE()
 class DiffPdfApp : public wxApp
 {
 public:
+    DiffPdfApp() : m_tlw(NULL) {}
+
     virtual bool OnInit()
     {
-        DiffFrame *tlw = new DiffFrame(m_title);
+        m_tlw = new DiffFrame(m_title);
 
         // like in LMI, maximize the window
-        tlw->Maximize();
-        tlw->Show();
+        m_tlw->Maximize();
+        m_tlw->Show();
 
         // yield so that size changes above take effect immediately (and so we
         // can query the window for its size)
         Yield();
 
-        tlw->SetDocs(m_doc1, m_doc2);
+#if !wxCHECK_VERSION(2,9,0)
+        SetFrameDocs();
+#endif
 
         return true;
     }
@@ -721,7 +727,29 @@ public:
         m_doc2 = doc2;
     }
 
+protected:
+#if wxCHECK_VERSION(2,9,0)
+    virtual void OnEventLoopEnter(wxEventLoopBase *loop)
+    {
+        wxApp::OnEventLoopEnter(loop);
+
+        if ( loop->IsMain() )
+            SetFrameDocs();
+    }
+#endif // wx >= 2.9.0
+
 private:
+    void SetFrameDocs()
+    {
+        wxASSERT( m_tlw );
+        wxASSERT( m_doc1 );
+        wxASSERT( m_doc2 );
+
+        m_tlw->SetDocs(m_doc1, m_doc2);
+    }
+
+private:
+    DiffFrame *m_tlw;
     wxString m_title;
     PopplerDocument *m_doc1, *m_doc2;
 };
@@ -742,24 +770,30 @@ int main(int argc, char *argv[])
 
     static const wxCmdLineEntryDesc cmd_line_desc[] =
     {
+        #if wxCHECK_VERSION(2,9,0)
+            #define wxT28(s) s
+        #else
+            #define wxT28(s) wxT(s)
+        #endif
+
         { wxCMD_LINE_SWITCH,
-                  wxT("h"), wxT("help"), wxT("show this help message"),
+                  wxT28("h"), wxT28("help"), wxT28("show this help message"),
                   wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
 
         { wxCMD_LINE_SWITCH,
-                  wxT("v"), wxT("verbose"), wxT("be verbose") },
+                  wxT28("v"), wxT28("verbose"), wxT28("be verbose") },
 
         { wxCMD_LINE_OPTION,
-                  NULL, wxT("output-diff"), wxT("output differences to given PDF file"),
+                  NULL, wxT28("output-diff"), wxT28("output differences to given PDF file"),
                   wxCMD_LINE_VAL_STRING },
 
         { wxCMD_LINE_SWITCH,
-                  NULL, wxT("view"), wxT("view the differences in a window") },
+                  NULL, wxT28("view"), wxT28("view the differences in a window") },
 
         { wxCMD_LINE_PARAM,
-                  NULL, NULL, wxT("file1.pdf"), wxCMD_LINE_VAL_STRING },
+                  NULL, NULL, wxT28("file1.pdf"), wxCMD_LINE_VAL_STRING },
         { wxCMD_LINE_PARAM,
-                  NULL, NULL, wxT("file2.pdf"), wxCMD_LINE_VAL_STRING },
+                  NULL, NULL, wxT28("file2.pdf"), wxCMD_LINE_VAL_STRING },
 
         { wxCMD_LINE_NONE }
     };
