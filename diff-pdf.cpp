@@ -374,7 +374,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                           page,
                           wxString::Format
                           (
-                              _T("Comparing page %d of %d..."),
+                              wxT("Comparing page %d of %d..."),
                               page+1,
                               pages_total
                           )
@@ -526,8 +526,8 @@ public:
         m_doc1 = doc1;
         m_doc2 = doc2;
 
-        wxProgressDialog progress(_T("Comparing documents"),
-                                  _T("Comparing documents..."),
+        wxProgressDialog progress(wxT("Comparing documents"),
+                                  wxT("Comparing documents..."),
                                   wxMax(poppler_document_get_n_pages(m_doc1),
                                         poppler_document_get_n_pages(m_doc2)),
                                   this,
