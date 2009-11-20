@@ -250,6 +250,21 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                 *(out++) = 128 + *(in++) / 2;
             }
         }
+
+        // If there were no changes, indicate it by using green
+        // (170,230,130) color for the thumbnail in gutter control:
+        if ( !changes )
+        {
+            out = thumbnail->GetData();
+            for ( int i = thumbnail_width * thumbnail_height;
+                  i > 0;
+                  i--, out += 3 )
+            {
+                out[0] = 170/2 + out[0] / 2;
+                out[1] = 230/2 + out[1] / 2;
+                out[2] = 130/2 + out[2] / 2;
+            }
+        }
     }
 
     if ( changes )
@@ -265,12 +280,14 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
 
 
 bool page_compare(cairo_t *cr_out,
-                  int page_index, PopplerPage *page1, PopplerPage *page2)
+                  int page_index, PopplerPage *page1, PopplerPage *page2,
+                  wxImage *thumbnail = NULL, int thumbnail_width = -1)
 {
     cairo_surface_t *img1 = page1 ? render_page(page1) : NULL;
     cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
 
-    cairo_surface_t *diff = diff_images(img1, img2);
+    cairo_surface_t *diff = diff_images(img1, img2, 0, 0,
+                                        thumbnail, thumbnail_width);
     const bool has_diff = (diff != NULL);
 
     if ( diff && g_verbose )
@@ -320,7 +337,8 @@ bool page_compare(cairo_t *cr_out,
 bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                  const char *pdf_output,
                  std::vector<bool> *differences,
-                 wxProgressDialog *progress = NULL)
+                 wxProgressDialog *progress = NULL,
+                 Gutter *gutter = NULL)
 {
     bool are_same = true;
 
@@ -370,7 +388,21 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                              ? poppler_document_get_page(doc2, page)
                              : NULL;
 
-        const bool page_same = page_compare(cr_out, page, page1, page2);
+        bool page_same;
+
+        if ( gutter )
+        {
+            wxImage thumbnail;
+            page_same = page_compare(cr_out, page, page1, page2,
+                                     &thumbnail, Gutter::WIDTH);
+            gutter->AddPage(thumbnail);
+        }
+        else
+        {
+            page_same = page_compare(cr_out, page, page1, page2);
+        }
+
+
         if ( differences )
             differences->push_back(!page_same);
 
@@ -400,7 +432,7 @@ const int ID_OFFSET_LEFT = wxNewId();
 const int ID_OFFSET_RIGHT = wxNewId();
 const int ID_OFFSET_UP = wxNewId();
 const int ID_OFFSET_DOWN = wxNewId();
-
+const int ID_GUTTER = wxNewId();
 
 #define BMP_ARTPROV(id) wxArtProvider::GetBitmap(id, wxART_TOOLBAR)
 
@@ -477,14 +509,14 @@ public:
         wxAcceleratorTable accel_table(8, accels);
         SetAcceleratorTable(accel_table);
 
-        m_gutter = new Gutter(this);
+        m_gutter = new Gutter(this, ID_GUTTER);
 
         m_viewer = new BitmapViewer(this);
         m_viewer->AttachGutter(m_gutter);
         m_viewer->SetFocus();
 
         wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
-        sizer->Add(m_gutter, wxSizerFlags().Border(wxALL, 2));
+        sizer->Add(m_gutter, wxSizerFlags(0).Expand().Border(wxALL, 2));
         sizer->Add(m_viewer, wxSizerFlags(1).Expand());
         SetSizer(sizer);
     }
@@ -502,7 +534,7 @@ public:
                                   wxPD_SMOOTH | wxPD_REMAINING_TIME);
 
 
-        doc_compare(m_doc1, m_doc2, NULL, &m_pages, &progress);
+        doc_compare(m_doc1, m_doc2, NULL, &m_pages, &progress, m_gutter);
 
         progress.Pulse();
 
@@ -528,6 +560,7 @@ public:
     void GoToPage(int n)
     {
         m_cur_page = n;
+        m_gutter->SetSelection(n);
         DoUpdatePage();
     }
 
@@ -559,29 +592,11 @@ private:
                                     &thumbnail, Gutter::WIDTH
                                 );
 
-        if ( diff )
-        {
-            m_viewer->Set(diff);
-        }
-        else
-        {
-            m_viewer->Set(img1);
-            // If there were no changes, indicate it by using green
-            // (170,230,130) color for the thumbnail in gutter control:
-            unsigned char *data = thumbnail.GetData();
-            for ( int i = thumbnail.GetWidth() * thumbnail.GetHeight();
-                  i > 0;
-                  i--, data += 3 )
-            {
-                data[0] = 170/2 + data[0] / 2;
-                data[1] = 230/2 + data[1] / 2;
-                data[2] = 130/2 + data[2] / 2;
-            }
-        }
+        m_viewer->Set(diff ? diff : img1);
 
         // Always update the diff map. It will be all-white if there were
         // no differences.
-        m_gutter->SetThumbnail(thumbnail);
+        m_gutter->SetThumbnail(m_cur_page, thumbnail);
 
         if ( img1 )
             cairo_surface_destroy(img1);
@@ -619,6 +634,11 @@ private:
             ),
             1
         );
+    }
+
+    void OnSetPage(wxCommandEvent& event)
+    {
+        GoToPage(event.GetSelection());
     }
 
     void OnPrevPage(wxCommandEvent&)
@@ -682,6 +702,7 @@ private:
 };
 
 BEGIN_EVENT_TABLE(DiffFrame, wxFrame)
+    EVT_LISTBOX  (ID_GUTTER,       DiffFrame::OnSetPage)
     EVT_TOOL     (ID_PREV_PAGE,    DiffFrame::OnPrevPage)
     EVT_TOOL     (ID_NEXT_PAGE,    DiffFrame::OnNextPage)
     EVT_UPDATE_UI(ID_PREV_PAGE,    DiffFrame::OnUpdatePrevPage)

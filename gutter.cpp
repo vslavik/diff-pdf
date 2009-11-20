@@ -21,41 +21,46 @@
 
 #include <wx/dcclient.h>
 #include <wx/scrolwin.h>
-#include <wx/sizer.h>
+#include <wx/settings.h>
 
+#define EXTRA_ROOM_FOR_SCROLLBAR  20
 
-BEGIN_EVENT_TABLE(Gutter, wxWindow)
-    EVT_PAINT(Gutter::OnPaint)
-END_EVENT_TABLE()
-
-Gutter::Gutter(wxWindow *parent)
-    : wxWindow(parent, wxID_ANY,
-               wxDefaultPosition, wxSize(WIDTH, WIDTH),
-               wxFULL_REPAINT_ON_RESIZE | wxSUNKEN_BORDER)
+Gutter::Gutter(wxWindow *parent, wxWindowID winid)
+    : wxVListBox(parent, winid)
 {
+    m_fontHeight = -1;
+
+    SetFont(wxSystemSettings::GetFont(wxSYS_DEFAULT_GUI_FONT));
+
+    SetMinSize(wxSize(WIDTH + 2 * BORDER + EXTRA_ROOM_FOR_SCROLLBAR, -1));
 }
 
 
-void Gutter::SetThumbnail(const wxImage& image)
+void Gutter::AddPage(const wxImage& thumbnail)
 {
-    m_background = wxBitmap(image);
+    m_backgrounds.push_back(wxBitmap(thumbnail));
+    SetItemCount(m_backgrounds.size());
+    Refresh();
+}
 
-    wxSize sz(image.GetWidth(), image.GetHeight());
-    SetSize(sz);
-    SetMinSize(sz);
-    GetParent()->GetSizer()->Layout();
-
-    Update();
+void Gutter::SetThumbnail(int page, const wxImage& thumbnail)
+{
+    m_backgrounds[page] = wxBitmap(thumbnail);
+    Refresh();
 }
 
 
 void Gutter::UpdateViewPos(wxScrolledWindow *win)
 {
+    int sel = GetSelection();
+    if ( sel == wxNOT_FOUND )
+        return;
+
     int total_x, total_y;
     win->GetVirtualSize(&total_x, &total_y);
 
-    float scale_x = float(GetSize().x) / float(total_x);
-    float scale_y = float(GetSize().y) / float(total_y);
+    float scale_x = float(m_backgrounds[sel].GetWidth()) / float(total_x);
+    float scale_y = float(m_backgrounds[sel].GetHeight()) / float(total_y);
 
     win->GetViewStart(&m_viewPos.x, &m_viewPos.y);
     win->GetClientSize(&m_viewPos.width, &m_viewPos.height);
@@ -69,18 +74,46 @@ void Gutter::UpdateViewPos(wxScrolledWindow *win)
 }
 
 
-void Gutter::OnPaint(wxPaintEvent& event)
+wxCoord Gutter::OnMeasureItem(size_t n) const
 {
-    wxPaintDC dc(this);
+    if ( m_fontHeight == -1 )
+        wxConstCast(this, Gutter)->m_fontHeight = GetCharHeight();
 
-    if ( m_background.IsOk() )
-        dc.DrawBitmap(m_background, 0, 0);
+    return m_backgrounds[n].GetHeight() + 3 * BORDER + m_fontHeight;
+}
 
-    // draw current position
-    if ( m_viewPos.IsEmpty() )
-        return;
 
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.SetPen(wxPen(*wxBLUE));
-    dc.DrawRectangle(m_viewPos);
+void Gutter::OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const
+{
+    const int xoffset = (GetClientSize().x - WIDTH) / 2;
+    const int yoffset = BORDER;
+
+
+    dc.DrawBitmap(m_backgrounds[n], rect.x + xoffset, rect.y + yoffset);
+
+    const wxString label = wxString::Format(wxT("%d"), n);
+    int tw;
+    dc.GetTextExtent(label, &tw, NULL);
+    dc.SetFont(GetFont());
+    dc.DrawText
+       (
+           label,
+           rect.x + xoffset + (WIDTH - tw) / 2,
+           rect.y + yoffset + m_backgrounds[n].GetHeight() + BORDER
+       );
+
+    if ( GetSelection() == n )
+    {
+        // draw current position
+        if ( m_viewPos.IsEmpty() )
+            return;
+
+        wxRect view(m_viewPos);
+        view.Offset(rect.GetTopLeft());
+        view.Offset(wxPoint(xoffset, yoffset));
+
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.SetPen(wxPen(*wxBLUE));
+        dc.DrawRectangle(view);
+    }
 }
