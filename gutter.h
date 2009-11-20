@@ -41,7 +41,7 @@ public:
     Gutter(wxWindow *parent, wxWindowID winid);
 
     // Add a new page to the gutter, with thumbnail's background to be shown
-    void AddPage(const wxImage& thumbnail);
+    void AddPage(const wxString& label, const wxImage& thumbnail);
 
     // Set the bitmap with thumbnail's background to be shown
     void SetThumbnail(int page, const wxImage& thumbnail);
@@ -55,6 +55,7 @@ protected:
     virtual void OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const;
 
 private:
+    std::vector<wxString> m_labels;
     std::vector<wxBitmap> m_backgrounds;
     wxRect m_viewPos;
     int m_fontHeight;

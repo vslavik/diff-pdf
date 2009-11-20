@@ -395,7 +395,33 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
             wxImage thumbnail;
             page_same = page_compare(cr_out, page, page1, page2,
                                      &thumbnail, Gutter::WIDTH);
-            gutter->AddPage(thumbnail);
+
+            wxString label1(wxT("(null)"));
+            wxString label2(wxT("(null)"));
+
+            if ( page1 )
+            {
+                gchar *label;
+                g_object_get(page1, "label", &label, NULL);
+                label1 = wxString::FromUTF8(label);
+                g_free(label);
+            }
+            if ( page2 )
+            {
+                gchar *label;
+                g_object_get(page2, "label", &label, NULL);
+                label2 = wxString::FromUTF8(label);
+                g_free(label);
+            }
+
+
+            wxString label;
+            if ( label1 == label2 )
+                label = label1;
+            else
+                label = label1 + wxT(" / ") + label2;
+
+            gutter->AddPage(label, thumbnail);
         }
         else
         {

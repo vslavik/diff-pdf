@@ -36,8 +36,9 @@ Gutter::Gutter(wxWindow *parent, wxWindowID winid)
 }
 
 
-void Gutter::AddPage(const wxImage& thumbnail)
+void Gutter::AddPage(const wxString& label, const wxImage& thumbnail)
 {
+    m_labels.push_back(label);
     m_backgrounds.push_back(wxBitmap(thumbnail));
     SetItemCount(m_backgrounds.size());
     Refresh();
@@ -91,7 +92,7 @@ void Gutter::OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const
 
     dc.DrawBitmap(m_backgrounds[n], rect.x + xoffset, rect.y + yoffset);
 
-    const wxString label = wxString::Format(wxT("%d"), n);
+    const wxString label = m_labels[n];
     int tw;
     dc.GetTextExtent(label, &tw, NULL);
     dc.SetFont(GetFont());
