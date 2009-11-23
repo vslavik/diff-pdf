@@ -86,7 +86,8 @@ cairo_surface_t *render_page(PopplerPage *page)
 
 
 // Creates image of differences between s1 and s2. If the offset is specified,
-// then s2 is displaced by it.
+// then s2 is displaced by it. If thumbnail and thumbnail_width are specified,
+// then a thumbnail with highlighted differences is created too.
 cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                              int offset_x = 0, int offset_y = 0,
                              wxImage *thumbnail = NULL, int thumbnail_width = -1)
@@ -279,6 +280,10 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
 }
 
 
+// Compares given two pages. If cr_out is not NULL, then the diff image (either
+// differences or unmodified page, if there are no diffs) is drawn to it.
+// If thumbnail and thumbnail_width are specified, then a thumbnail with
+// highlighted differences is created too.
 bool page_compare(cairo_t *cr_out,
                   int page_index, PopplerPage *page1, PopplerPage *page2,
                   wxImage *thumbnail = NULL, int thumbnail_width = -1)
@@ -333,7 +338,9 @@ bool page_compare(cairo_t *cr_out,
 
 // Compares two documents, writing diff PDF into file named 'pdf_output' if
 // not NULL. if 'differences' is not NULL, puts a map of which pages differ
-// into it.
+// into it. If 'progress' is provided, it is updated to reflect comparison's
+// progress. If 'gutter' is set, then all the pages are added to it, with
+// their respective thumbnails (the gutter must be empty beforehand).
 bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                  const char *pdf_output,
                  std::vector<bool> *differences,
