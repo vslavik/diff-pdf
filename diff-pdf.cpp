@@ -285,7 +285,7 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
 // If thumbnail and thumbnail_width are specified, then a thumbnail with
 // highlighted differences is created too.
 bool page_compare(cairo_t *cr_out,
-                  int page_index, PopplerPage *page1, PopplerPage *page2,
+                  PopplerPage *page1, PopplerPage *page2,
                   wxImage *thumbnail = NULL, int thumbnail_width = -1)
 {
     cairo_surface_t *img1 = page1 ? render_page(page1) : NULL;
@@ -294,9 +294,6 @@ bool page_compare(cairo_t *cr_out,
     cairo_surface_t *diff = diff_images(img1, img2, 0, 0,
                                         thumbnail, thumbnail_width);
     const bool has_diff = (diff != NULL);
-
-    if ( diff && g_verbose )
-        printf("page %d differs\n", page_index);
 
     if ( cr_out )
     {
@@ -400,7 +397,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
         if ( gutter )
         {
             wxImage thumbnail;
-            page_same = page_compare(cr_out, page, page1, page2,
+            page_same = page_compare(cr_out, page1, page2,
                                      &thumbnail, Gutter::WIDTH);
 
             wxString label1(wxT("(null)"));
@@ -432,9 +429,11 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
         }
         else
         {
-            page_same = page_compare(cr_out, page, page1, page2);
+            page_same = page_compare(cr_out, page1, page2);
         }
 
+        if ( !page_same && g_verbose )
+            printf("page %d differs\n", page);
 
         if ( differences )
             differences->push_back(!page_same);
