@@ -432,14 +432,23 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
             page_same = page_compare(cr_out, page1, page2);
         }
 
-        if ( !page_same && g_verbose )
-            printf("page %d differs\n", page);
-
         if ( differences )
             differences->push_back(!page_same);
 
         if ( !page_same )
+        {
             are_same = false;
+
+            if ( g_verbose )
+                printf("page %d differs\n", page);
+
+            // If we don't need to output all different pages in any
+            // form (including verbose report of differing pages!), then
+            // we can stop comparing the PDFs as soon as we find the first
+            // difference.
+            if ( !g_verbose && !pdf_output && !differences && !gutter )
+                break;
+        }
     }
 
     if ( pdf_output )
