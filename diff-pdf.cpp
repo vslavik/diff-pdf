@@ -45,7 +45,7 @@
 // PDF rendering functions
 // ------------------------------------------------------------------------
 
-bool g_verbose = true;
+bool g_verbose = false;
 
 // Resolution to use for rasterization, in DPI
 #define RESOLUTION  300
@@ -863,6 +863,9 @@ int main(int argc, char *argv[])
         default: // syntax error
             return 2;
     }
+
+    if ( parser.Found(wxT("verbose")) )
+        g_verbose = true;
 
     wxFileName file1(parser.GetParam(0));
     wxFileName file2(parser.GetParam(1));
