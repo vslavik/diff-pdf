@@ -44,7 +44,7 @@ PKG_CHECK_MODULES(POPPLER,
                   [poppler-cairo >= 0.10 poppler-glib >= 0.10 cairo-pdf])
 
 AM_OPTIONS_WXCONFIG
-AM_PATH_WXCONFIG([2.8.0], [wxfound=1], [wxfound=0], [core,base])
+AM_PATH_WXCONFIG([2.8.11], [wxfound=1], [wxfound=0], [core,base])
 if test "$wxfound" != 1 ; then
     AC_MSG_ERROR([wxWidgets is required])
 fi

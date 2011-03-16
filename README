@@ -41,7 +41,7 @@ and Makefile.in files are missing.)
 
 As for dependencies, diff-pdf requires the following libraries:
 
- * wxWidgets >= 2.8
+ * wxWidgets >= 2.8.11
  * Cairo >= 1.4
  * Poppler >= 0.10
 
