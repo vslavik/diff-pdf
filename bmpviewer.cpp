@@ -42,7 +42,8 @@ BitmapViewer::BitmapViewer(wxWindow *parent)
 
     SetScrollRate(1, 1);
 
-    m_content = new wxStaticBitmap(this, wxID_ANY, wxNullBitmap);
+    wxBitmap dummyBitmap(16, 16);
+    m_content = new wxStaticBitmap(this, wxID_ANY, dummyBitmap);
 
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(m_content, wxSizerFlags(1).Expand());
