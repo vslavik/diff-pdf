@@ -1,0 +1,293 @@
+
+# Versions of dependency packages to install. Prebuilt packages are
+# installed from http://www.gtk.org/download/win32.php
+
+POPPLER_VERSION      := 0.18.4
+WXWIDGETS_VERSION    := 2.9.3
+
+LIBTIFF_VERSION      := 3.9.6
+OPENJPEG_VERSION     := 1.5.0
+
+CAIRO_VERSION        := 1.10.2-2
+GLIB_VERSION         := 2.28.8-1
+PKG_CONFIG_VERSION   := 0.26-1
+ZLIB_VERSION         := 1.2.5-2
+LIBPNG_VERSION       := 1.4.3-1
+JPEG_VERSION         := 8-1
+FREETYPE_VERSION     := 2.4.2-1
+FONTCONFIG_VERSION   := 2.8.0-2
+GETTEXT_VERSION      := 0.18.1.1-2
+
+CONFIGURE_PATHS          = PKG_CONFIG_PATH=$(ROOTDIR)/lib/pkgconfig \
+                           CPPFLAGS="-I$(ROOTDIR)/include" \
+                           LDFLAGS="-L$(ROOTDIR)/lib"
+CONFIGURE_FLAGS          = --prefix=$(ROOTDIR) \
+                           --disable-static --enable-shared \
+                           $(CONFIGURE_PATHS)
+WX_CONFIGURE_FLAGS       = --enable-debug \
+                           --enable-stl \
+                           --disable-svg \
+                           --without-libpng \
+                           --without-libjpeg \
+                           --without-libtiff
+POPPLER_CONFIGURE_FLAGS  = --disable-utils \
+                           CPPFLAGS="-I$(ROOTDIR)/include -DOPJ_STATIC"
+OPENJPEG_CONFIGURE_FLAGS = --disable-doc --disable-png --disable-tiff \
+                           --enable-static --disable-shared
+
+
+POPPLER_FILE       := poppler-$(POPPLER_VERSION).tar.gz
+POPPLER_URL        := http://poppler.freedesktop.org/$(POPPLER_FILE)
+
+WXWIDGETS_FILE     := wxWidgets-$(WXWIDGETS_VERSION).tar.bz2
+WXWIDGETS_URL      := http://sourceforge.net/projects/wxwindows/files/$(WXWIDGETS_VERSION)/$(WXWIDGETS_FILE)
+
+LIBTIFF_FILE       := tiff-$(LIBTIFF_VERSION).tar.gz
+LIBTIFF_URL        := ftp://ftp.remotesensing.org/pub/libtiff/$(LIBTIFF_FILE)
+
+OPENJPEG_FILE      := openjpeg-$(OPENJPEG_VERSION).tar.gz
+OPENJPEG_URL       := http://openjpeg.googlecode.com/files/$(OPENJPEG_FILE)
+
+WXWIDGETS_VERSION_TAG := $(subst .,,$(WXWIDGETS_VERSION))
+
+# Helper functions:
+
+majorver     = $(word 1,$(subst ., ,$1)).$(word 2,$(subst ., ,$1))
+gtk-url      = http://ftp.gnome.org/pub/gnome/binaries/win32/$1/$2$4_$3_win32.zip
+tar-basename = $(subst .tar.gz,,$(subst .tar.bz2,,$1))
+
+# Internal variables:
+
+WGET  := /bin/wget.exe
+UNZIP := /bin/unzip.exe
+
+WORKDIR   := $(CURDIR)/mingw
+DOWNLOADS := $(WORKDIR)/downloads
+BUILDDIR  := $(WORKDIR)/builddir
+ROOTDIR   := $(WORKDIR)/root
+MANIFESTS := $(ROOTDIR)/manifest
+PRODUCTS  := $(WORKDIR)/Products
+
+# add root's directory to the path, this will be used by the shell too:
+PATH      := $(ROOTDIR)/bin:$(PATH)
+
+make-workdir := $(WORKDIR)/stamp
+dependencies-stamp := $(MANIFESTS)/deps.installed
+bin-dependencies-stamp := $(MANIFESTS)/prebuilt.installed
+
+
+all: stage
+
+
+$(WORKDIR)/stamp:
+	mkdir -p $(WORKDIR)
+	mkdir -p $(DOWNLOADS)
+	mkdir -p $(BUILDDIR)
+	mkdir -p $(ROOTDIR)
+	mkdir -p $(MANIFESTS)
+	mkdir -p $(PRODUCTS)
+	touch $(WORKDIR)/stamp
+
+clean:
+	rm -rf $(WORKDIR)
+
+
+# -----------------------------------------------------------------------------------------------
+# Build diff-pdf itself:
+# -----------------------------------------------------------------------------------------------
+
+DIFFPDF_BUILDDIR := $(BUILDDIR)/diff-pdf
+
+diff-pdf: $(DIFFPDF_BUILDDIR)/diff-pdf.exe
+
+$(DIFFPDF_BUILDDIR)/diff-pdf.exe: $(DIFFPDF_BUILDDIR)/Makefile
+	$(MAKE) -C $(DIFFPDF_BUILDDIR)
+
+$(DIFFPDF_BUILDDIR)/Makefile: Makefile.am configure $(dependencies-stamp)
+	mkdir -p $(DIFFPDF_BUILDDIR)
+	cd $(DIFFPDF_BUILDDIR) && $(CURDIR)/configure --prefix=$(PRODUCTS) --bindir=$(PRODUCTS) $(CONFIGURE_PATHS)
+
+
+# -----------------------------------------------------------------------------------------------
+# stage files
+# -----------------------------------------------------------------------------------------------
+
+REQUIRED_FILES := \
+		wxbase$(WXWIDGETS_VERSION_TAG)u_gcc_custom.dll \
+		wxmsw$(WXWIDGETS_VERSION_TAG)u_core_gcc_custom.dll \
+		freetype6.dll \
+		zlib1.dll \
+		intl.dll \
+		libjpeg-8.dll \
+		libpng14-14.dll \
+		libtiff-3.dll \
+		libcairo-2.dll \
+		libexpat-1.dll \
+		libfontconfig-1.dll \
+		libglib-2.0-0.dll \
+		libgobject-2.0-0.dll \
+		libgthread-2.0-0.dll \
+		libpoppler-19.dll \
+		libpoppler-glib-8.dll \
+		libgcc_s_dw2-1.dll \
+		libstdc++-6.dll \
+		fonts/fonts.conf \
+		diff-pdf.exe
+
+stage: $(addprefix $(PRODUCTS)/,$(REQUIRED_FILES))
+
+$(PRODUCTS)/diff-pdf.exe: $(DIFFPDF_BUILDDIR)/diff-pdf.exe
+	cp -f $< $@
+	strip $@
+
+$(PRODUCTS)/fonts/fonts.conf: fonts/fonts.conf
+	mkdir -p $(PRODUCTS)/fonts
+	cp -f $< $@
+
+$(PRODUCTS)/%.dll: %.dll
+	cp -f $< $@
+	strip $@
+
+MINGW_BINDIR := $(dir $(shell which mingw-get))
+vpath %.dll $(MINGW_BINDIR):$(ROOTDIR)/bin:$(ROOTDIR)/lib
+
+
+# -----------------------------------------------------------------------------------------------
+# build distribution archive
+# -----------------------------------------------------------------------------------------------
+
+DIST_ARCHIVE := diff-pdf-$(shell date +%F).zip
+
+dist: stage
+	@echo "creating $(DIST_ARCHIVE)..."
+	@rm -f $(DIST_ARCHIVE)
+	@cd $(PRODUCTS) && zip -9 $(CURDIR)/$(DIST_ARCHIVE) $(REQUIRED_FILES)
+
+
+# -----------------------------------------------------------------------------------------------
+# build dependencies
+# -----------------------------------------------------------------------------------------------
+
+dependencies: $(dependencies-stamp)
+bin-dependencies: $(bin-dependencies-stamp)
+
+$(dependencies-stamp): $(make-workdir) $(bin-dependencies-stamp)
+	touch $@
+
+$(bin-dependencies-stamp): $(make-workdir)
+	touch $@
+
+# download dependencies files:
+download: $(make-workdir)
+
+# Download of prebuilt dependencies from Win32 GTK+ port:
+define gtk-download-rules-impl
+$(dependencies-stamp): $(MANIFESTS)/$2$4_$3_win32.mft
+$(bin-dependencies-stamp): $(MANIFESTS)/$2$4_$3_win32.mft
+download: $(DOWNLOADS)/$2$4_$3_win32.zip
+$(DOWNLOADS)/$2$4_$3_win32.zip: $(WGET) $(make-workdir)
+	$$(WGET) --output-document=$$@ $(call gtk-url,$1,$2,$3,$4)
+	@touch $$@
+endef
+
+define gtk-download-rules
+$(call gtk-download-rules-impl,$1,$2,$3,)
+$(call gtk-download-rules-impl,$1,$2,$3,-dev)
+endef
+
+$(eval $(call gtk-download-rules,dependencies,pkg-config,$(PKG_CONFIG_VERSION)))
+$(eval $(call gtk-download-rules,dependencies,cairo,$(CAIRO_VERSION)))
+$(eval $(call gtk-download-rules,dependencies,zlib,$(ZLIB_VERSION)))
+$(eval $(call gtk-download-rules,dependencies,libpng,$(LIBPNG_VERSION)))
+$(eval $(call gtk-download-rules,dependencies,jpeg,$(JPEG_VERSION)))
+$(eval $(call gtk-download-rules,dependencies,freetype,$(FREETYPE_VERSION)))
+$(eval $(call gtk-download-rules,dependencies,fontconfig,$(FONTCONFIG_VERSION)))
+$(eval $(call gtk-download-rules,dependencies,gettext-runtime,$(GETTEXT_VERSION)))
+$(eval $(call gtk-download-rules,glib/$(call majorver,$(GLIB_VERSION)),glib,$(GLIB_VERSION)))
+
+$(MANIFESTS)/%.mft: $(DOWNLOADS)/%.zip $(UNZIP)
+	unzip -o -DD $< -d $(ROOTDIR)
+	$(RUN_FIXUP_COMMANDS)
+
+# Some packages must be built from sources and downloaded and unpacked manually:
+
+# $1 - file, $2 - url
+define download-and-build-rules
+download: $(DOWNLOADS)/$1
+$(DOWNLOADS)/$1: $(WGET) $(make-workdir)
+	$$(WGET) --output-document=$$@ $2
+	@touch $$@
+$(dependencies-stamp): $(MANIFESTS)/$(call tar-basename,$1).installed
+$(BUILDDIR)/$(call tar-basename,$1)/.unpack: $(DOWNLOADS)/$1
+	tar -x -C $(BUILDDIR) -f $$<
+	$$(RUN_FIXUP_COMMANDS)
+	touch $$@
+endef
+
+$(eval $(call download-and-build-rules,$(WXWIDGETS_FILE),$(WXWIDGETS_URL)))
+$(eval $(call download-and-build-rules,$(POPPLER_FILE),$(POPPLER_URL)))
+$(eval $(call download-and-build-rules,$(LIBTIFF_FILE),$(LIBTIFF_URL)))
+$(eval $(call download-and-build-rules,$(OPENJPEG_FILE),$(OPENJPEG_URL)))
+
+WXWIDGETS_DIR = $(call tar-basename,$(WXWIDGETS_FILE))
+POPPLER_DIR   = $(call tar-basename,$(POPPLER_FILE))
+LIBTIFF_DIR   = $(call tar-basename,$(LIBTIFF_FILE))
+OPENJPEG_DIR  = $(call tar-basename,$(OPENJPEG_FILE))
+
+$(BUILDDIR)/$(WXWIDGETS_DIR)/.conf: CONFIGURE_FLAGS += $(WX_CONFIGURE_FLAGS)
+$(BUILDDIR)/$(POPPLER_DIR)/.conf:   CONFIGURE_FLAGS += $(POPPLER_CONFIGURE_FLAGS)
+$(BUILDDIR)/$(OPENJPEG_DIR)/.conf:  CONFIGURE_FLAGS += $(OPENJPEG_CONFIGURE_FLAGS)
+
+$(BUILDDIR)/%.conf: $(BUILDDIR)/%.unpack $(bin-dependencies-stamp)
+	cd $(dir $@) && ./configure $(CONFIGURE_FLAGS)
+	touch $@
+
+$(BUILDDIR)/%/.build: $(BUILDDIR)/%/.conf
+	$(MAKE) -C $(dir $@)
+	touch $@
+
+$(MANIFESTS)/%.installed: $(BUILDDIR)/%/.build
+	$(MAKE) -C $(dir $<) install
+	$(RUN_FIXUP_COMMANDS)
+	touch $@
+
+# fix broken libjpeg headers - they define boolean type,
+# which conflicts with mingw headers
+JPEG_FIXUP_CMD := sed --in-place=.orig -e 's/boolean/jpeg_boolean/g'
+$(MANIFESTS)/jpeg-dev_$(JPEG_VERSION)_win32.mft: RUN_FIXUP_COMMANDS := \
+                           $(JPEG_FIXUP_CMD) $(ROOTDIR)/include/j*.h
+$(BUILDDIR)/$(POPPLER_DIR)/.unpack: RUN_FIXUP_COMMANDS = \
+                           $(JPEG_FIXUP_CMD) $(dir $@)poppler/DCTStream.cc
+$(BUILDDIR)/$(LIBTIFF_DIR)/.unpack: RUN_FIXUP_COMMANDS = \
+                           $(JPEG_FIXUP_CMD) $(dir $@)libtiff/*jpeg*.c
+
+# openjpeg built with static library breaks libtool, nuke the .la file:
+$(MANIFESTS)/$(OPENJPEG_DIR).installed: RUN_FIXUP_COMMANDS = \
+                           rm -f $(ROOTDIR)/lib/libopenjpeg.la
+
+# additional dependencies between the deps packages:
+$(BUILDDIR)/$(POPPLER_DIR)/.conf: $(MANIFESTS)/$(LIBTIFF_DIR).installed
+$(BUILDDIR)/$(POPPLER_DIR)/.conf: $(MANIFESTS)/$(OPENJPEG_DIR).installed
+
+
+$(WGET):
+	@echo " "
+	@echo "Please install wget by running the following command:"
+	@echo ""
+	@echo "   mingw-get install msys-wget"
+	@echo ""
+	@exit 1
+
+$(UNZIP):
+	@echo " "
+	@echo "Please install wget by running the following command:"
+	@echo ""
+	@echo "   mingw-get install msys-unzip"
+	@echo ""
+	@exit 1
+
+.PHONY: all clean dependencies bin-dependencies download diff-pdf stage dist
+
+
+# Unpacking rules:
+

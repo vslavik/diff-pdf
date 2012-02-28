@@ -24,7 +24,17 @@ See the output of `diff-pdf --help` for complete list of options.
 
 
 
-  1. Compiling from sources
+  1. Obtaining the binaries
+=============================
+
+Precompiled version of the tool for Windows is available from
+http://github.com/vslavik/diff-pdf/downloads -- the ZIP archive contains
+everything you need to run diff-pdf. It will work from any place you with
+unpack it to.
+
+
+
+  2. Compiling from sources
 =============================
 
 The build system uses Automake and so a Unix or Unix-like environment (Cygwin
@@ -55,20 +65,41 @@ available from http://github.com/vslavik/diff-pdf/downloads (wxWidgets is
 not included, as it supports MinGW well).
 
 
+  1.1. Compiling on Windows using MinGW
+-----------------------------------------
 
-  2. Installing
+1. First of all, you will need working MinGW installation with MSYS environment
+   and C++ compiler. The instructions on installing MinGW can be found here:
+
+       http://www.mingw.org/wiki/Getting_Started
+
+2. Once installed, launch the MinGW Shell tool. It will open a terminal window;
+   type "cd /c/directory/with/diff-pdf" to do to the directory with diff-pdf
+   sources.
+
+3. You will need to install additional MinGW components that are not normally
+   included with MinGW, using these commands:
+
+       mingw-get install msys-wget
+       mingw-get install msys-unzip
+       mingw-get install msys-perl
+
+4. It's time to build the software now. Type
+
+      make -f Makefile.mingw
+
+   and give it some time to finish. Note that this step requires Internet
+   connectivity, as it downloads some dependencies packages.
+
+5. If everything went well, diff-pdf is now in the mingw\Products\ directory.
+
+
+
+  3. Installing
 =================
 
 On Unix, the usual `make install` is sufficient.
 
-On Windows, the compiled diff-pdf.exe binary is almost self-contained. It will
-work from any place you with to copy it to. The only requirement is that the
-fonts/fonts.conf file must be included alongside it. It must be in "fonts"
-directory, just like in the source tree:
-
-   c:\
-       diff-pdf\
-           diff-pdf.exe
-           fonts\
-               fonts.conf
-
+On Windows, installation is not necessary, just copy the files somewhere. If
+you built it following the instructions above, all the necessary files will be
+in the mingw\Products\ directory.
