@@ -9,7 +9,7 @@ code, which is 0 if there are no differences and 1 if the two PDFs differ. If
 given the --pdf option, it produces a PDF file with visually highlighted
 differences:
 
-   $ diff-pdf --pdf=diff.pdf a.pdf b.pdf
+   $ diff-pdf --output-diff=diff.pdf a.pdf b.pdf
 
 Another option is to compare the two files visually in a simple GUI, using
 the --view argument:
@@ -54,6 +54,10 @@ As for dependencies, diff-pdf requires the following libraries:
  * wxWidgets >= 2.8.11
  * Cairo >= 1.4
  * Poppler >= 0.10
+
+ CentOS: 
+  * sudo yum groupinstall "Development Tools"
+  * sudo yum install wxGTK wxGTK-devel poppler-glib poppler-glib-devel
 
 Note that many more libraries are required on Windows, where none of the
 libraries Cairo and Poppler use are normally available. At the time of writing,
