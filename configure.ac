@@ -18,7 +18,7 @@ dnl along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 AC_PREREQ(2.61)
-AC_INIT(diff-pdf, 0.1, [vslavik@fastmail.fm])
+AC_INIT(diff-pdf, 0.2, [vslavik@fastmail.fm])
 
 AC_CONFIG_SRCDIR([diff-pdf.cpp])
 AC_CONFIG_AUX_DIR([admin])
