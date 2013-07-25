@@ -861,6 +861,10 @@ int main(int argc, char *argv[])
     };
 
     wxCmdLineParser parser(cmd_line_desc, argc, argv);
+
+    // Set default output to stderr
+    wxMessageOutput::Set(new wxMessageOutputStderr); 
+
     switch ( parser.Parse() )
     {
         case -1: // --help
