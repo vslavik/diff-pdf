@@ -495,6 +495,7 @@ const int ID_GUTTER = wxNewId();
     #define BMP_ZOOM_OUT   wxBitmap(gtk_zoom_out_xpm)
 #endif
 
+static const float ZOOM_FACTOR_STEP = 1.2f;
 
 class DiffFrame : public wxFrame
 {
@@ -606,8 +607,6 @@ public:
     }
 
 private:
-    static const float ZOOM_FACTOR_STEP = 1.2;
-
     void DoUpdatePage()
     {
         wxBusyCursor wait;
