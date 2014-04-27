@@ -31,6 +31,8 @@ http://www.tt-solutions.com/downloads/diff-pdf-2012-02-28.zip -- the ZIP
 archive contains everything you need to run diff-pdf. It will work from any
 place you with unpack it to.
 
+Precompiled version for openSUSE and Fedora can be downloaded from the
+openSUSE build service. http://software.opensuse.org
 
 
   2. Compiling from sources
