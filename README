@@ -5,7 +5,7 @@ diff-pdf is a tool for visually comparing two PDFs.
 
 It takes two PDF files as arguments. By default, its only output is its return
 code, which is 0 if there are no differences and 1 if the two PDFs differ. If
-given the --pdf option, it produces a PDF file with visually highlighted
+given the --output-diff option, it produces a PDF file with visually highlighted
 differences:
 
    $ diff-pdf --output-diff=diff.pdf a.pdf b.pdf
