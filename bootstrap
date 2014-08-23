@@ -42,14 +42,12 @@ if [ ! -f configure.ac -o ! -f Makefile.am ]; then
     exit 2
 fi
 
-mkdir -p admin
-
 # use --foreign with automake because we lack standard GNU NEWS and AUTHOR
 # files, if they're added we can "upgrade" to (default) GNU strictness. Use
 # --copy to allow simultaneous use on windows under mingw and cygwin platforms.
 # Symlinking of files under mingw does not work out for cygwin and vice-versa.
 echo "Setting up build system for diff-pdf:"
-echo " - aclocal " && aclocal ${wx+-I} $wx && \
+echo " - aclocal " && aclocal ${wx+-I} $wx -I admin && \
 echo " - autoconf " && autoconf && \
 echo " - automake " && automake --add-missing --copy --foreign && \
 echo "Build setup successful, type \"configure\" to configure diff-pdf now." && \

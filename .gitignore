@@ -1,4 +1,8 @@
-admin/*
+admin/config.guess
+admin/config.sub
+admin/depcomp
+admin/install-sh
+admin/missing
 Makefile
 Makefile.in
 configure
