@@ -64,6 +64,11 @@ As for dependencies, diff-pdf requires the following libraries:
   * sudo apt-get install make automake g++
   * sudo apt-get install libpoppler-glib-dev poppler-utils wxgtk2.8-dev
 
+ OSX:
+  * Install Command Line Tools for Xcode (xcode-select --install)
+    and Homebrew (http://brew.sh) to manage dependencies
+  * brew install automake autoconf wxmac poppler cairo
+
 Note that many more libraries are required on Windows, where none of the
 libraries Cairo and Poppler use are normally available. At the time of writing,
 transitive cover of the above dependencies included fontconfig, freetype, glib,
