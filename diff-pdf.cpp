@@ -886,13 +886,13 @@ int main(int argc, char *argv[])
     const wxString url1 = wxT("file://") + file1.GetFullPath(wxPATH_UNIX);
     const wxString url2 = wxT("file://") + file2.GetFullPath(wxPATH_UNIX);
 
-    GError *err;
+    GError *err = NULL;
 
     PopplerDocument *doc1 = poppler_document_new_from_file(url1.utf8_str(), NULL, &err);
     if ( !doc1 )
     {
         fprintf(stderr, "Error opening %s: %s\n", argv[1], err->message);
-        g_object_unref(err);
+        g_error_free(err);
         return 3;
     }
 
@@ -900,7 +900,7 @@ int main(int argc, char *argv[])
     if ( !doc2 )
     {
         fprintf(stderr, "Error opening %s: %s\n", argv[2], err->message);
-        g_object_unref(err);
+        g_error_free(err);
         return 3;
     }
 
