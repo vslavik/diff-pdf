@@ -891,7 +891,7 @@ int main(int argc, char *argv[])
     PopplerDocument *doc1 = poppler_document_new_from_file(url1.utf8_str(), NULL, &err);
     if ( !doc1 )
     {
-        fprintf(stderr, "Error opening %s: %s\n", argv[1], err->message);
+        fprintf(stderr, "Error opening %s: %s\n", (const char*) parser.GetParam(0).c_str(), err->message);
         g_error_free(err);
         return 3;
     }
@@ -899,7 +899,7 @@ int main(int argc, char *argv[])
     PopplerDocument *doc2 = poppler_document_new_from_file(url2.utf8_str(), NULL, &err);
     if ( !doc2 )
     {
-        fprintf(stderr, "Error opening %s: %s\n", argv[2], err->message);
+        fprintf(stderr, "Error opening %s: %s\n", (const char*) parser.GetParam(1).c_str(), err->message);
         g_error_free(err);
         return 3;
     }
