@@ -52,7 +52,7 @@ and Makefile.in files are missing.)
 
 As for dependencies, diff-pdf requires the following libraries:
 
- * wxWidgets >= 2.8.11
+ * wxWidgets >= 3.0
  * Cairo >= 1.4
  * Poppler >= 0.10
 
@@ -62,7 +62,7 @@ As for dependencies, diff-pdf requires the following libraries:
 
  Ubuntu:
   * sudo apt-get install make automake g++
-  * sudo apt-get install libpoppler-glib-dev poppler-utils wxgtk2.8-dev
+  * sudo apt-get install libpoppler-glib-dev poppler-utils wxgtk3.0-dev
 
  OSX:
   * Install Command Line Tools for Xcode (xcode-select --install)
