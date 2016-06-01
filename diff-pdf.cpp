@@ -40,6 +40,7 @@
 #include <wx/toolbar.h>
 #include <wx/artprov.h>
 #include <wx/progdlg.h>
+#include <wx/filesys.h>
 
 // ------------------------------------------------------------------------
 // PDF rendering functions
@@ -883,8 +884,8 @@ int main(int argc, char *argv[])
     wxFileName file2(parser.GetParam(1));
     file1.MakeAbsolute();
     file2.MakeAbsolute();
-    const wxString url1 = wxT("file://") + file1.GetFullPath(wxPATH_UNIX);
-    const wxString url2 = wxT("file://") + file2.GetFullPath(wxPATH_UNIX);
+    const wxString url1 = wxFileSystem::FileNameToURL(file1);
+    const wxString url2 = wxFileSystem::FileNameToURL(file2);
 
     GError *err = NULL;
 
