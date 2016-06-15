@@ -316,7 +316,7 @@ bool page_compare(cairo_t *cr_out,
             // by writing unchanged pages in their original form rather than
             // a rasterized one
 
-            poppler_page_render(page1, cr_out);
+            poppler_page_render_for_printing(page1, cr_out);
         }
 
         cairo_show_page(cr_out);
