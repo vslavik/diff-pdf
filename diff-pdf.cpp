@@ -343,7 +343,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                  const char *pdf_output,
                  std::vector<bool> *differences,
                  wxProgressDialog *progress = NULL,
-                 Gutter *gutter = NULL)
+                 Gutter *gutter = NULL, wxString *thumb_output = NULL)
 {
     bool are_same = true;
 
@@ -358,6 +358,11 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
         surface_out = cairo_pdf_surface_create(pdf_output, w, h);
         cr_out = cairo_create(surface_out);
     }
+    if ( thumb_output )
+    {
+      wxInitAllImageHandlers();
+    }
+
 
     int pages1 = poppler_document_get_n_pages(doc1);
     int pages2 = poppler_document_get_n_pages(doc2);
@@ -430,7 +435,16 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
         }
         else
         {
-            page_same = page_compare(cr_out, page1, page2);
+	  wxImage thumbnail;
+	  wxString filename;
+	  page_same = page_compare(cr_out, page1, page2,
+				   &thumbnail, 200);
+	  if (thumb_output) {
+	    filename.Printf(wxT("_page_%03d"), page);
+	    filename = *thumb_output + filename + wxString(".png");
+	    thumbnail.SaveFile(filename, wxBITMAP_TYPE_PNG);
+	  }
+	    //            page_same = page_compare(cr_out, page1, page2);
         }
 
         if ( differences )
@@ -456,6 +470,10 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
     {
         cairo_destroy(cr_out);
         cairo_surface_destroy(surface_out);
+    }
+
+    if ( thumb_output )
+    {
     }
 
     return are_same;
@@ -849,6 +867,10 @@ int main(int argc, char *argv[])
                   NULL, wxT28("output-diff"), wxT28("output differences to given PDF file"),
                   wxCMD_LINE_VAL_STRING },
 
+        { wxCMD_LINE_OPTION,
+                  NULL, wxT28("thumbnail"), wxT28("output thumbnails to given PDF file (requires --output-diff)"),
+                  wxCMD_LINE_VAL_STRING },
+
         { wxCMD_LINE_SWITCH,
                   NULL, wxT28("view"), wxT28("view the differences in a window") },
 
@@ -908,13 +930,20 @@ int main(int argc, char *argv[])
     int retval = 0;
 
     wxString pdf_file;
+    wxString thumb_file;
     if ( parser.Found(wxT("output-diff"), &pdf_file) )
     {
-        retval = doc_compare(doc1, doc2, pdf_file.utf8_str(), NULL) ? 0 : 1;
+      if ( parser.Found(wxT("thumbnail"), &thumb_file) )
+	{
+	  retval = doc_compare(doc1, doc2, pdf_file.utf8_str(), NULL, NULL, NULL, &thumb_file) ? 0 : 1; 
+	} else {
+          retval = doc_compare(doc1, doc2, pdf_file.utf8_str(), NULL) ? 0 : 1;
+      }
     }
     else if ( parser.Found(wxT("view")) )
     {
-        wxGetApp().SetData(parser.GetParam(0), doc1,
+
+      wxGetApp().SetData(parser.GetParam(0), doc1,
                            parser.GetParam(1), doc2);
         retval = wxEntry(argc, argv);
     }
