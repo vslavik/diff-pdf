@@ -1,3 +1,10 @@
+*Note: this repository is provided **as-is** and the code is not being actively
+developed. If you wish to improve it, that's greatly appreciated: please make
+the changes and submit a pull request, I'll gladly merge it or help you out
+with finishing it. However, please do not expect any kind of support, including
+implementation of feature requests or fixes. If you're not a developer and/or
+willing to get your hands dirty, this tool is probably not for you.*
+
 ## Usage
 
 diff-pdf is a tool for visually comparing two PDFs.
