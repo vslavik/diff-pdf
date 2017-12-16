@@ -138,7 +138,6 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
     if ( r1 != r2 )
     {
         changes = true;
-
         cairo_t *cr = cairo_create(diff);
         cairo_set_source_rgb(cr, 1, 1, 1);
         cairo_rectangle(cr, 0, 0, rdiff.width, rdiff.height);
@@ -385,6 +384,9 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                           )
                        );
         }
+
+        poppler_page_get_size(poppler_document_get_page(doc1, page), &w, &h);
+        cairo_pdf_surface_set_size (surface_out, w, h);
 
         PopplerPage *page1 = page < pages1
                              ? poppler_document_get_page(doc1, page)
