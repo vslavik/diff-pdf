@@ -138,6 +138,7 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
     if ( r1 != r2 )
     {
         changes = true;
+
         cairo_t *cr = cairo_create(diff);
         cairo_set_source_rgb(cr, 1, 1, 1);
         cairo_rectangle(cr, 0, 0, rdiff.width, rdiff.height);
