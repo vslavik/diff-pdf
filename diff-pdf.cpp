@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "bmpviewer.h"
 #include "gutter.h"
 
@@ -193,11 +192,21 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                     changes = true;
                     if ( thumbnail )
                     {
+                        int tx =int((r2.x + x/4.0) * thumbnail_scale);
+                        int ty =int((r2.y + y) * thumbnail_scale);
+
+                        if(tx > thumbnail_width-1){
+                           tx = thumbnail_width-1;
+                        }
+                        if(ty > thumbnail_height-1){
+                           ty = thumbnail_height-1;
+                        }
+
                         // mark changes with red
                         thumbnail->SetRGB
                                   (
-                                      int((r2.x + x/4) * thumbnail_scale),
-                                      int((r2.y + y) * thumbnail_scale),
+                                      tx,
+                                      ty,
                                       255, 0, 0
                                   );
                     }
@@ -384,6 +393,12 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                               pages_total
                           )
                        );
+        }
+
+        poppler_page_get_size(poppler_document_get_page(doc1, page), &w, &h);
+        if ( pdf_output )
+        {
+           cairo_pdf_surface_set_size (surface_out, w, h);
         }
 
         PopplerPage *page1 = page < pages1
