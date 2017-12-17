@@ -129,7 +129,7 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
         thumbnail_scale = float(thumbnail_width) / float(rdiff.width);
         thumbnail_height = int(rdiff.height * thumbnail_scale);
         thumbnail->Create(thumbnail_width, thumbnail_height);
-        thumbnail->SetRGB(wxRect(), 255, 255, 255);
+        thumbnail->SetRGB(wxRect(), 255, 255, 255); //initalize the thumbnail with a white rectangle
     }
 
     // clear the surface to white background if the merged images don't fully
@@ -192,21 +192,21 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                     changes = true;
                     if ( thumbnail )
                     {
+                        //calculate the coordinates in the thumbnail
                         int tx =int((r2.x + x/4.0) * thumbnail_scale);
                         int ty =int((r2.y + y) * thumbnail_scale);
 
-                        if(tx > thumbnail_width-1){
-                           tx = thumbnail_width-1;
+                        //Limit the coordinates to the thumbnail size
+                        if(tx >= thumbnail_width){
+                            tx = thumbnail_width-1;
                         }
-                        if(ty > thumbnail_height-1){
-                           ty = thumbnail_height-1;
+                        if(ty >= thumbnail_height){
+                            ty = thumbnail_height-1;
                         }
 
                         // mark changes with red
                         thumbnail->SetRGB
-                                  (
-                                      tx,
-                                      ty,
+                                  (tx,ty,
                                       255, 0, 0
                                   );
                     }
