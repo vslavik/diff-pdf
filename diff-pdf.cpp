@@ -197,19 +197,15 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                         int ty =int((r2.y + y) * thumbnail_scale);
 
                         // Limit the coordinates to the thumbnail size
-                        // to avoid problems with changes that are on
-                        // the very edge of the page or even go over
+                        // to avoid assertion failure within
+                        // SetRGB for changes that are to close or on
                         // the edge of the page.
                         // see pull request #58
-                        if( tx >= thumbnail_width ){
-                            tx = thumbnail_width-1;
-                        }
-                        if( ty >= thumbnail_height ){
-                            ty = thumbnail_height-1;
-                        }
+                        tx = std::min(tx, thumbnail_width-1);
+                        ty = std::min(ty, thumbnail_height-1);
 
                         // mark changes with red
-                        thumbnail->SetRGB(tx,ty,255, 0, 0);
+                        thumbnail->SetRGB(tx, ty, 255, 0, 0);
                     }
                 }
 
