@@ -389,7 +389,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
         {
             double w, h;
             poppler_page_get_size(poppler_document_get_page(doc1, page), &w, &h);
-            cairo_pdf_surface_set_size (surface_out, w, h);
+            cairo_pdf_surface_set_size(surface_out, w, h);
         }
 
         PopplerPage *page1 = page < pages1
