@@ -198,9 +198,8 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                         int tx = int((r2.x + x/4.0) * thumbnail_scale);
                         int ty = int((r2.y + y) * thumbnail_scale);
 
-                        // Limit the coordinates to the thumbnail size to avoid
-                        // assertion failure within SetRGB for changes that are
-                        // to close or on the edge of the page.
+                        // Limit the coordinates to the thumbnail size (may be
+                        // off slightly due to rounding errors).
                         // See https://github.com/vslavik/diff-pdf/pull/58
                         tx = std::min(tx, thumbnail_width - 1);
                         ty = std::min(ty, thumbnail_height - 1);
