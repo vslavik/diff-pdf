@@ -347,14 +347,13 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
 {
     bool are_same = true;
 
-    double w, h;
-    poppler_page_get_size(poppler_document_get_page(doc1, 0), &w, &h);
-
     cairo_surface_t *surface_out = NULL;
     cairo_t *cr_out = NULL;
 
     if ( pdf_output )
     {
+        double w, h;
+        poppler_page_get_size(poppler_document_get_page(doc1, 0), &w, &h);
         surface_out = cairo_pdf_surface_create(pdf_output, w, h);
         cr_out = cairo_create(surface_out);
     }
@@ -384,6 +383,13 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                               pages_total
                           )
                        );
+        }
+
+        if ( pdf_output && page != 0 )
+        {
+            double w, h;
+            poppler_page_get_size(poppler_document_get_page(doc1, page), &w, &h);
+            cairo_pdf_surface_set_size(surface_out, w, h);
         }
 
         PopplerPage *page1 = page < pages1
