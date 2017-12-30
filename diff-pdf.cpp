@@ -385,7 +385,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                        );
         }
 
-        if ( pdf_output && page != 0)
+        if ( pdf_output && page != 0 )
         {
             double w, h;
             poppler_page_get_size(poppler_document_get_page(doc1, page), &w, &h);
