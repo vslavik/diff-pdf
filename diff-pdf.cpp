@@ -130,7 +130,8 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
         thumbnail_scale = float(thumbnail_width) / float(rdiff.width);
         thumbnail_height = int(rdiff.height * thumbnail_scale);
         thumbnail->Create(thumbnail_width, thumbnail_height);
-        thumbnail->SetRGB(wxRect(), 255, 255, 255); // initalize the thumbnail with a white rectangle
+        // initalize the thumbnail with a white rectangle:
+        thumbnail->SetRGB(wxRect(), 255, 255, 255);
     }
 
     // clear the surface to white background if the merged images don't fully
@@ -194,16 +195,15 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                     if ( thumbnail )
                     {
                         // calculate the coordinates in the thumbnail
-                        int tx =int((r2.x + x/4.0) * thumbnail_scale);
-                        int ty =int((r2.y + y) * thumbnail_scale);
+                        int tx = int((r2.x + x/4.0) * thumbnail_scale);
+                        int ty = int((r2.y + y) * thumbnail_scale);
 
-                        // Limit the coordinates to the thumbnail size
-                        // to avoid assertion failure within
-                        // SetRGB for changes that are to close or on
-                        // the edge of the page.
-                        // see pull request #58
-                        tx = std::min(tx, thumbnail_width-1);
-                        ty = std::min(ty, thumbnail_height-1);
+                        // Limit the coordinates to the thumbnail size to avoid
+                        // assertion failure within SetRGB for changes that are
+                        // to close or on the edge of the page.
+                        // See https://github.com/vslavik/diff-pdf/pull/58
+                        tx = std::min(tx, thumbnail_width - 1);
+                        ty = std::min(ty, thumbnail_height - 1);
 
                         // mark changes with red
                         thumbnail->SetRGB(tx, ty, 255, 0, 0);
