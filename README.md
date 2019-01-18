@@ -80,11 +80,22 @@ $ sudo apt-get install libpoppler-glib-dev poppler-utils wxgtk3.0-dev
 ```
 
 #### OSX:
-- Install Command Line Tools for Xcode `$ xcode-select --install` and
-[Homebrew](http://brew.sh) to manage dependencies, then:
+Install Command Line Tools for Xcode:
+
+```
+$ xcode-select --install
+```
+
+and install [Homebrew](https://brew.sh) or [MacPorts](https://www.macports.org) to manage dependencies, then:
 
 ```
 $ brew install automake autoconf wxmac poppler cairo
+```
+
+or
+
+```
+$ sudo port install automake autoconf wxWidgets-3.0 poppler cairo
 ```
 
 Note that many more libraries are required on Windows, where none of the
