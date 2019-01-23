@@ -39,6 +39,11 @@ Precompiled version of the tool for Windows is available from our
 section -- the ZIP archive contains everything you need to run diff-pdf. It will
 work from any place you unpack it to.
 
+On Mac, if you use [Homebrew](https://brew.sh), you can use it to install diff-pdf with it:
+```
+$ brew install diff-pdf
+```
+
 Precompiled version for openSUSE and Fedora can be downloaded from the
 [openSUSE build service](http://software.opensuse.org).
 
