@@ -34,9 +34,9 @@ See the output of `$ diff-pdf --help` for complete list of options.
 
 ## Obtaining the binaries
 
-Precompiled version of the tool for Windows is available from our
-[downloads](http://www.tt-solutions.com/downloads/diff-pdf-2012-02-28.zip)
-section -- the ZIP archive contains everything you need to run diff-pdf. It will
+Precompiled version of the tool for Windows is available as part of
+[the latest release](https://github.com/vslavik/diff-pdf/releases/tag/v0.3)
+as a ZIP archive, which contains everything you need to run diff-pdf. It will
 work from any place you unpack it to.
 
 On Mac, if you use [Homebrew](https://brew.sh), you can use it to install diff-pdf with it:
@@ -84,7 +84,7 @@ $ sudo apt-get install make automake g++
 $ sudo apt-get install libpoppler-glib-dev poppler-utils wxgtk3.0-dev
 ```
 
-#### OSX:
+#### macOS:
 Install Command Line Tools for Xcode:
 
 ```
@@ -108,40 +108,37 @@ libraries Cairo and Poppler use are normally available. At the time of writing,
 transitive cover of the above dependencies included fontconfig, freetype, glib,
 libpng, pixman, gettext, libiconv, libjpeg and zlib.
 
-Precompiled version of the dependencies for Windows, built with MinGW, are
-available from our [downlods](http://github.com/vslavik/diff-pdf/downloads)
-section (wxWidgets is not included, as it supports MinGW well).
 
+### Compiling on Windows using MSYS + MinGW
 
-### Compiling on Windows using MinGW
+1. First of all, you will need working MinGW installation with MSYS2 environment
+and C++ compiler. Install MSYS2 by following [their instructions](https://www.msys2.org).
 
-1. First of all, you will need working MinGW installation with MSYS environment
-and C++ compiler. The instructions on installing MinGW can be found in the
-[MinGW website](http://www.mingw.org/wiki/Getting_Started):
-
-1. Once installed, launch the MinGW Shell tool. It will open a terminal window;
-type `$ cd /c/directory/with/diff-pdf` to do to the directory with diff-pdf
+1. Once installed, launch the MSYS2 MinGW shell. It will open a terminal window;
+type `cd /c/directory/with/diff-pdf` to go to the directory with diff-pdf
 sources.
 
-1. You will need to install additional MinGW components that are not normally
-included with MinGW, using these commands:
+1. You will need to install additional MSYS components that are not normally
+included with MSYS, using these commands:
 
     ```
-    $ mingw-get install msys-wget
-    $ mingw-get install msys-unzip
-    $ mingw-get install msys-perl
+    $ pacman -Syu
+    $ pacman -S automake autoconf pkg-config make zip
+    $ pacman -S pacman -S mingw-w64-i686-{gcc,poppler,wxWidgets}
     ```
 
-1. It's time to build the software now and give it some time to finish (Note
-that this step requires Internet connectivity, as it downloads some dependencies
-packages):
+1. Build diff-pdf in the same way as in the instructions for Unix above:
 
     ```
-    $ make -f Makefile.mingw
+    $ ./bootstrap  # only if building from git repository
+    $ ./configure
+    $ make
     ```
 
-1. If everything went well, diff-pdf is now in the `mingw\Products\`
-directory.
+1. To build a ZIP archive will all DLLs, run
+    ```
+    $ make windows-dist
+    ```
 
 
 ## Installing
@@ -150,4 +147,4 @@ On Unix, the usual `make install` is sufficient.
 
 On Windows, installation is not necessary, just copy the files somewhere. If
 you built it following the instructions above, all the necessary files will be
-in the `mingw\Products\` directory.
+in the created ZIP archive.

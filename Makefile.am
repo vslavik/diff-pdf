@@ -11,4 +11,15 @@ diff_pdf_SOURCES = \
 diff_pdf_CXXFLAGS = $(POPPLER_CFLAGS) $(WX_CXXFLAGS)
 diff_pdf_LDADD = $(POPPLER_LIBS) $(WX_LIBS)
 
-EXTRA_DIST = gtk-zoom-in.xpm gtk-zoom-out.xpm
+EXTRA_DIST = gtk-zoom-in.xpm gtk-zoom-out.xpm win32/fonts.conf win32/collect-dlls.sh
+
+windows-dist: diff-pdf-$(VERSION).zip
+
+diff-pdf-$(VERSION).zip: all
+	rm -rf $@ windist
+	$(srcdir)/win32/collect-dlls.sh windist diff-pdf.exe
+	mkdir -p windist/fonts && cp -a $(srcdir)/win32/fonts.conf windist/fonts/
+	(cd windist && zip -9r ../$@ .)
+	rm -rf windist
+
+.PHONY: windows-dist
