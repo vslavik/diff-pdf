@@ -5,6 +5,8 @@ with finishing it. However, please do not expect any kind of support, including
 implementation of feature requests or fixes. If you're not a developer and/or
 willing to get your hands dirty, this tool is probably not for you.*
 
+[![Build status](https://ci.appveyor.com/api/projects/status/m6d8n2kcyvk3cqi6?svg=true)](https://ci.appveyor.com/project/vslavik/diff-pdf)
+
 ## Usage
 
 diff-pdf is a tool for visually comparing two PDFs.
@@ -124,7 +126,7 @@ included with MSYS, using these commands:
     ```
     $ pacman -Syu
     $ pacman -S automake autoconf pkg-config make zip
-    $ pacman -S pacman -S mingw-w64-i686-{gcc,poppler,wxWidgets}
+    $ pacman -S mingw-w64-i686-{gcc,poppler,wxWidgets}
     ```
 
 1. Build diff-pdf in the same way as in the instructions for Unix above:

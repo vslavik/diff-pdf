@@ -20,7 +20,10 @@ while true ; do
     if [ $file_count -eq $last_file_count ] ; then break ; fi
     last_file_count=$file_count
 
-    objdump -x $OUTPUT/* | grep "DLL Name" | cut -d: -f2 | sort | uniq | while read dll ; do
-        cp -anv /mingw32/bin/$dll $OUTPUT 2>/dev/null || true
+    objdump -x $OUTPUT/* | grep "DLL Name" | cut -d: -f2 | sort | uniq | while read i ; do
+        dll=`echo $i`  # fixup weird line endings
+        if [[ -f /mingw32/bin/$dll ]] ; then
+            cp -anv /mingw32/bin/$dll $OUTPUT
+        fi
     done
 done
