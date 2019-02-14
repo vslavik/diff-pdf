@@ -29,7 +29,7 @@ $ diff-pdf --view a.pdf b.pdf
 
 This opens a window that lets you view the files' pages and zoom in on details.
 It is also possible to shift the two pages relatively to each other using
-Ctrl-arrows. This is useful for identifying translation-only differences.
+Ctrl-arrows (Cmd-arrows on MacOS). This is useful for identifying translation-only differences.
 
 See the output of `$ diff-pdf --help` for complete list of options.
 
@@ -44,6 +44,10 @@ work from any place you unpack it to.
 On Mac, if you use [Homebrew](https://brew.sh), you can use it to install diff-pdf with it:
 ```
 $ brew install diff-pdf
+```
+On Mac, if you use [Macports](https://macports.org), you can install diff-pdf with:
+```
+$ port install diff-pdf
 ```
 
 Precompiled version for openSUSE and Fedora can be downloaded from the
@@ -96,13 +100,13 @@ $ xcode-select --install
 and install [Homebrew](https://brew.sh) or [MacPorts](https://www.macports.org) to manage dependencies, then:
 
 ```
-$ brew install automake autoconf wxmac poppler cairo
+$ brew install automake autoconf wxmac poppler cairo pkg-config
 ```
 
 or
 
 ```
-$ sudo port install automake autoconf wxWidgets-3.0 poppler cairo
+$ sudo port install automake autoconf wxWidgets-3.0 poppler cairo pkgconfig
 ```
 
 Note that many more libraries are required on Windows, where none of the
