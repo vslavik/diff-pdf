@@ -11,7 +11,7 @@ diff_pdf_SOURCES = \
 diff_pdf_CXXFLAGS = $(POPPLER_CFLAGS) $(WX_CXXFLAGS)
 diff_pdf_LDADD = $(POPPLER_LIBS) $(WX_LIBS)
 
-EXTRA_DIST = gtk-zoom-in.xpm gtk-zoom-out.xpm win32/fonts.conf win32/collect-dlls.sh
+EXTRA_DIST = bootstrap gtk-zoom-in.xpm gtk-zoom-out.xpm README.md win32/fonts.conf win32/collect-dlls.sh
 
 windows-dist: diff-pdf-win-$(VERSION).zip
 
