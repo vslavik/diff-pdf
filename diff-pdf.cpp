@@ -356,7 +356,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                  wxProgressDialog *progress = NULL,
                  Gutter *gutter = NULL)
 {
-    bool are_same = true;
+    int pages_differ = 0;
 
     cairo_surface_t *surface_out = NULL;
     cairo_t *cr_out = NULL;
@@ -377,7 +377,6 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
     {
         if ( g_verbose )
             printf("pages count differs: %d vs %d\n", pages1, pages2);
-        are_same = false;
     }
 
     for ( int page = 0; page < pages_total; page++ )
@@ -455,7 +454,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
 
         if ( !page_same )
         {
-            are_same = false;
+	    pages_differ ++;
 
             if ( g_verbose )
                 printf("page %d differs\n", page);
@@ -475,7 +474,10 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
         cairo_surface_destroy(surface_out);
     }
 
-    return are_same;
+    if (g_verbose)
+        printf("%d of %d pages differ.\n", pages_differ, pages_total);
+
+    return (pages_differ > 0) || (pages1 != pages2 );
 }
 
 
