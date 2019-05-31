@@ -47,6 +47,7 @@
 // ------------------------------------------------------------------------
 
 bool g_verbose = false;
+long g_channel_tolerance = 0;
 
 // Resolution to use for rasterization, in DPI
 #define RESOLUTION  300
@@ -189,7 +190,11 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                 unsigned char cg2 = *(data2 + x + 1);
                 unsigned char cb2 = *(data2 + x + 2);
 
-                if ( cr1 != cr2 || cg1 != cg2 || cb1 != cb2 )
+
+		if ( cr1 > (cr2+g_channel_tolerance) || cr2 < (cr2-g_channel_tolerance)
+		  || cg1 > (cg2+g_channel_tolerance) || cg2 < (cg2-g_channel_tolerance)
+		  || cb1 > (cb2+g_channel_tolerance) || cb2 < (cb2-g_channel_tolerance)
+		   )
                 {
                     changes = true;
                     if ( thumbnail )
@@ -863,6 +868,10 @@ int main(int argc, char *argv[])
                   NULL, wxT28("output-diff"), wxT28("output differences to given PDF file"),
                   wxCMD_LINE_VAL_STRING },
 
+        { wxCMD_LINE_OPTION,
+                  NULL, wxT28("channel-tolerance"), wxT28("consider channel values to be equal if within specified tolerance"),
+                  wxCMD_LINE_VAL_NUMBER },
+
         { wxCMD_LINE_SWITCH,
                   NULL, wxT28("view"), wxT28("view the differences in a window") },
 
@@ -918,6 +927,15 @@ int main(int argc, char *argv[])
         g_error_free(err);
         return 3;
     }
+
+    if ( parser.Found(wxT("channel-tolerance"), &g_channel_tolerance) )
+    {
+        if (g_channel_tolerance < 0 || g_channel_tolerance > 255) {
+            fprintf(stderr, "Invalid channel-tolerance: %ld. Valid range is 0(default, exact matching)-255\n", g_channel_tolerance);
+            return 2;
+	}
+    }
+
 
     int retval = 0;
 
