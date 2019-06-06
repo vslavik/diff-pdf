@@ -47,6 +47,7 @@
 // ------------------------------------------------------------------------
 
 bool g_verbose = false;
+bool g_skip_identical = false;
 long g_channel_tolerance = 0;
 
 // Resolution to use for rasterization, in DPI
@@ -327,11 +328,14 @@ bool page_compare(cairo_t *cr_out,
             // by writing unchanged pages in their original form rather than
             // a rasterized one
 
-            poppler_page_render(page1, cr_out);
+            if (!g_skip_identical)
+               poppler_page_render(page1, cr_out);
         }
 
-        cairo_show_page(cr_out);
     }
+
+    if (diff || !g_skip_identical)
+        cairo_show_page(cr_out);
 
     if ( diff )
         cairo_surface_destroy(diff);
@@ -866,6 +870,9 @@ int main(int argc, char *argv[])
         { wxCMD_LINE_SWITCH,
                   wxT28("v"), wxT28("verbose"), wxT28("be verbose") },
 
+        { wxCMD_LINE_SWITCH,
+                  wxT28("s"), wxT28("skip-identical"), wxT28("only output pages with differences") },
+
         { wxCMD_LINE_OPTION,
                   NULL, wxT28("output-diff"), wxT28("output differences to given PDF file"),
                   wxCMD_LINE_VAL_STRING },
@@ -904,6 +911,9 @@ int main(int argc, char *argv[])
 
     if ( parser.Found(wxT("verbose")) )
         g_verbose = true;
+
+    if ( parser.Found(wxT("skip-identical")) )
+        g_skip_identical = true;
 
     wxFileName file1(parser.GetParam(0));
     wxFileName file2(parser.GetParam(1));
