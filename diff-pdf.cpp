@@ -48,6 +48,7 @@
 
 bool g_verbose = false;
 bool g_skip_identical = false;
+bool g_mark_differences = false;
 long g_channel_tolerance = 0;
 
 // Resolution to use for rasterization, in DPI
@@ -181,6 +182,8 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
               y < r2.height;
               y++, data2 += stride2, out += stridediff )
         {
+            bool linediff = false;
+
             for ( int x = 0; x < r2.width * 4; x += 4 )
             {
                 unsigned char cr1 = *(out + x + 0);
@@ -198,6 +201,8 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
 		   )
                 {
                     changes = true;
+                    linediff = true;
+
                     if ( thumbnail )
                     {
                         // calculate the coordinates in the thumbnail
@@ -217,6 +222,14 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
 
                 // change the B channel to be from s2; RG will be s1
                 *(out + x + 2) = cb2;
+            }
+
+            if (g_mark_differences && linediff) {
+                for (int x = 0; x < (10 < r2.width ? 10 : r2.width) * 4; x+=4) {
+                   *(out + x + 0) = 0;
+                   *(out + x + 1) = 0;
+                   *(out + x + 2) = 255;
+		}
             }
         }
     }
@@ -873,6 +886,9 @@ int main(int argc, char *argv[])
         { wxCMD_LINE_SWITCH,
                   wxT28("s"), wxT28("skip-identical"), wxT28("only output pages with differences") },
 
+        { wxCMD_LINE_SWITCH,
+                  wxT28("m"), wxT28("mark-differences"), wxT28("additionally mark differences on left side") },
+
         { wxCMD_LINE_OPTION,
                   NULL, wxT28("output-diff"), wxT28("output differences to given PDF file"),
                   wxCMD_LINE_VAL_STRING },
@@ -914,6 +930,9 @@ int main(int argc, char *argv[])
 
     if ( parser.Found(wxT("skip-identical")) )
         g_skip_identical = true;
+
+    if ( parser.Found(wxT("mark-differences")) )
+        g_mark_differences = true;
 
     wxFileName file1(parser.GetParam(0));
     wxFileName file2(parser.GetParam(1));
