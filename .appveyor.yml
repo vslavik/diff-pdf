@@ -8,16 +8,14 @@ for:
     except:
       - image: Ubuntu
   environment:
-    PATH: C:\msys64\%MSYSTEM%\bin;C:\msys64\usr\bin;%PATH%
     MSYSTEM: MINGW32
+    PATH: C:\msys64\%MSYSTEM%\bin;C:\msys64\usr\bin;%PATH%
     CHERE_INVOKING: 1
 
 
 install:
   - sh: sudo apt-get update
   - sh: sudo apt-get --yes install libpoppler-glib-dev poppler-utils libwxgtk3.0-dev
-  - cmd: sh -lc "pacman --noconfirm --sync --refresh --refresh pacman"
-  - cmd: sh -lc "pacman --noconfirm --sync --refresh --refresh --sysupgrade --sysupgrade"
   - cmd: sh -lc "pacman --noconfirm -S zip mingw-w64-i686-{poppler,wxWidgets}"
 
 build_script:
