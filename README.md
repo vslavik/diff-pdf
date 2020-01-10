@@ -37,7 +37,7 @@ See the output of `$ diff-pdf --help` for complete list of options.
 ## Obtaining the binaries
 
 Precompiled version of the tool for Windows is available as part of
-[the latest release](https://github.com/vslavik/diff-pdf/releases/tag/v0.3)
+[the latest release](https://github.com/vslavik/diff-pdf/releases/tag/v0.4)
 as a ZIP archive, which contains everything you need to run diff-pdf. It will
 work from any place you unpack it to.
 
