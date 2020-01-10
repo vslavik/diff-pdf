@@ -347,7 +347,7 @@ bool page_compare(cairo_t *cr_out,
 
     }
 
-    if (diff || !g_skip_identical)
+    if (cr_out && (diff || !g_skip_identical))
         cairo_show_page(cr_out);
 
     if ( diff )
