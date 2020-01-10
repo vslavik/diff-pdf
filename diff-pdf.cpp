@@ -494,7 +494,8 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
     if (g_verbose)
         printf("%d of %d pages differ.\n", pages_differ, pages_total);
 
-    return (pages_differ > 0) || (pages1 != pages2 );
+    // are doc1 and doc1 the same?
+    return (pages_differ == 0) && (pages1 == pages2);
 }
 
 
