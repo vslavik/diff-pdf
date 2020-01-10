@@ -195,9 +195,9 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                 unsigned char cb2 = *(data2 + x + 2);
 
 
-		if ( cr1 > (cr2+g_channel_tolerance) || cr2 < (cr2-g_channel_tolerance)
-		  || cg1 > (cg2+g_channel_tolerance) || cg2 < (cg2-g_channel_tolerance)
-		  || cb1 > (cb2+g_channel_tolerance) || cb2 < (cb2-g_channel_tolerance)
+		if ( cr1 > (cr2+g_channel_tolerance) || cr1 < (cr2-g_channel_tolerance)
+		  || cg1 > (cg2+g_channel_tolerance) || cg1 < (cg2-g_channel_tolerance)
+		  || cb1 > (cb2+g_channel_tolerance) || cb1 < (cb2-g_channel_tolerance)
 		   )
                 {
                     changes = true;
