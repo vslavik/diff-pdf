@@ -345,10 +345,9 @@ bool page_compare(cairo_t *cr_out,
                poppler_page_render(page1, cr_out);
         }
 
+        if (diff || !g_skip_identical)
+            cairo_show_page(cr_out);
     }
-
-    if (diff || !g_skip_identical)
-        cairo_show_page(cr_out);
 
     if ( diff )
         cairo_surface_destroy(diff);
