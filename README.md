@@ -49,11 +49,10 @@ On Mac, if you use [Macports](https://macports.org), you can install diff-pdf wi
 ```
 $ port install diff-pdf
 ```
-#### Fedora and CentOS 8:
+On  Fedora and CentOS 8:
 ```
 $ sudo dnf install diff-pdf
 ```
-
 Precompiled version for openSUSE can be downloaded from the
 [openSUSE build service](http://software.opensuse.org).
 
