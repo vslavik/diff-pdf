@@ -33,9 +33,13 @@ Ctrl-arrows (Cmd-arrows on MacOS). This is useful for identifying translation-on
 
 #### Other options:
 `--help`                          displays complete list of options (not on Windows CMD) 
+
 `--verbose`                       be verbose
+
 `--skip-identical`                only output pages with differences
+
 `--mark-differences`              additionally mark differences on left side of the document
+
 `--channel-tolerance [0-255]`     consider channel values to be equal if within specified tolerance
 
 
