@@ -126,7 +126,7 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
         cairo_image_surface_create(CAIRO_FORMAT_RGB24, rdiff.width, rdiff.height);
 
     float thumbnail_scale;
-    int thumbnail_height;
+    int thumbnail_height = 0;
 
     if ( thumbnail )
     {
@@ -648,8 +648,8 @@ private:
     {
         wxBusyCursor wait;
 
-        const int pages1 = poppler_document_get_n_pages(m_doc1);
-        const int pages2 = poppler_document_get_n_pages(m_doc2);
+        const unsigned int pages1 = poppler_document_get_n_pages(m_doc1);
+        const unsigned int pages2 = poppler_document_get_n_pages(m_doc2);
 
         PopplerPage *page1 = m_cur_page < pages1
                              ? poppler_document_get_page(m_doc1, m_cur_page)
@@ -774,7 +774,7 @@ private:
     PopplerDocument *m_doc1, *m_doc2;
     std::vector<bool> m_pages;
     int m_diff_count;
-    int m_cur_page;
+    long unsigned int m_cur_page;
     wxPoint m_offset;
 };
 

@@ -103,7 +103,7 @@ void Gutter::OnDrawItem(wxDC& dc, const wxRect& rect, size_t n) const
            rect.y + yoffset + m_backgrounds[n].GetHeight() + BORDER
        );
 
-    if ( GetSelection() == n )
+    if ( GetSelection() == int(n) )
     {
         // draw current position
         if ( m_viewPos.IsEmpty() )
