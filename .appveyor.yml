@@ -1,6 +1,6 @@
 image:
 - Ubuntu
-- Visual Studio 2017
+- Visual Studio 2019
 
 for:
 -
@@ -16,6 +16,7 @@ for:
 install:
   - sh: sudo apt-get update
   - sh: sudo apt-get --yes install libpoppler-glib-dev poppler-utils libwxgtk3.0-dev
+  - cmd: sh -lc "pacman --noconfirm -Syuu"
   - cmd: sh -lc "pacman --noconfirm -S zip mingw-w64-i686-{poppler,wxWidgets}"
 
 build_script:
