@@ -84,17 +84,10 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
   struct Rect {
     int x, y, width, height;
   };
-  Rect r1;
-  Rect r2;
-
-  if (s1) {
-    r1 = Rect({0, 0, cairo_image_surface_get_width(s1),
-               cairo_image_surface_get_height(s1)});
-  }
-  if (s2) {
-    r2 = Rect({offset_x, offset_y, cairo_image_surface_get_width(s2),
-               cairo_image_surface_get_height(s2)});
-  }
+  Rect r1 = {0, 0, s1 ? cairo_image_surface_get_width(s1) : 0,
+             s1 ? cairo_image_surface_get_height(s1) : 0};
+  Rect r2 = {0, 0, s2 ? cairo_image_surface_get_width(s2) : 0,
+             s2 ? cairo_image_surface_get_height(s2) : 0};
 
   // compute union rectangle starting at [0,0] position
   Rect rdiff = {std::min(r1.x, r2.x), std::min(r1.y, r2.y),
