@@ -283,7 +283,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
       pages_differ++;
 
       if (g_verbose)
-        printf("page %d differs\n", page);
+        printf("page %d differs\n", page + 1);
 
       // If we don't need to output all different pages in any
       // form (including verbose report of differing pages!), then
