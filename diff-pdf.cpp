@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <stdio.h>
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -332,8 +333,8 @@ int main(int argc, char *argv[]) {
     return 2;
   }
   std::string pdf_file;
-  std::string file1 = argv[argc - 2];
-  std::string file2 = argv[argc - 1];
+  std::string file1 = std::filesystem::absolute(argv[argc - 2]);
+  std::string file2 = std::filesystem::absolute(argv[argc - 1]);
   for (int i = 1; i < argc - 2; ++i) {
     std::string arg = argv[i];
     if (arg == "-h" || arg == "--help") {
@@ -345,7 +346,7 @@ int main(int argc, char *argv[]) {
     } else if (arg == "-m" || arg == "--mark-differences") {
       g_mark_differences = true;
     } else if (arg.size() > 14 && arg.find("--output-diff=") == 0) {
-      pdf_file = arg.substr(14);
+      pdf_file = std::filesystem::absolute(arg.substr(14));
     } else if (arg.size() > 20 && arg.find("--channel-tolerance=") == 0) {
       g_channel_tolerance = atol(arg.substr(20).c_str());
       if (g_channel_tolerance < 0 || g_channel_tolerance > 255) {
