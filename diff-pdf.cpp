@@ -265,7 +265,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
   for (int page = 0; page < pages_total; page++) {
     if (pdf_output && page != 0) {
       double w, h;
-      poppler_page_get_size(poppler_document_get_page(doc1, page), &w, &h);
+      poppler_page_get_size(poppler_document_get_page(pages1 > pages2 ? doc1 : doc2, page), &w, &h);
       cairo_pdf_surface_set_size(surface_out, w, h);
     }
 
