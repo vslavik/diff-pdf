@@ -20,19 +20,7 @@ highlighted differences:
 $ diff-pdf --output-diff=diff.pdf a.pdf b.pdf
 ```
 
-Another option is to compare the two files visually in a simple GUI, using
-the `--view` argument:
-
-```
-$ diff-pdf --view a.pdf b.pdf
-```
-
-This opens a window that lets you view the files' pages and zoom in on details.
-It is also possible to shift the two pages relatively to each other using
-Ctrl-arrows (Cmd-arrows on MacOS). This is useful for identifying translation-only differences.
-
 See the output of `$ diff-pdf --help` for complete list of options.
-
 
 ## Obtaining the binaries
 
@@ -63,19 +51,13 @@ The build system uses Automake and so a Unix or Unix-like environment (Cygwin
 or MSYS) is required. Compilation is done in the usual way:
 
 ```
-$ ./bootstrap
-$ ./configure
-$ make
-$ make install
+$ cmake -S <source-dir> -B <build-dir> -DCMAKE_BUILD_TYPE=Release
+$ cmake --build <build-dir>
+$ cmake --install <build-dir>
 ```
-
-(Note that the first step, running the `./bootstrap` script, is only required
-when building sources checked from version control system, i.e. when `configure`
-and `Makefile.in` files are missing.)
 
 As for dependencies, diff-pdf requires the following libraries:
 
-- wxWidgets >= 3.0
 - Cairo >= 1.4
 - Poppler >= 0.10
 
