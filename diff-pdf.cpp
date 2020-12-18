@@ -373,13 +373,7 @@ int main(int argc, char *argv[]) {
   }
   g_free(uri2);
 
-  int retval = 0;
-
-  if (!pdf_file.empty()) {
-    gchar retval = doc_compare(doc1, doc2, pdf_file.c_str(), NULL) ? 0 : 1;
-  } else {
-    retval = doc_compare(doc1, doc2, NULL, NULL) ? 0 : 1;
-  }
+  int retval = doc_compare(doc1, doc2, pdf_file.empty() ? NULL : pdf_file.c_str(), NULL) ? 0 : 1;
 
   g_object_unref(doc1);
   g_object_unref(doc2);
