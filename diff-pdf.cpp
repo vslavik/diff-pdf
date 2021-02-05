@@ -50,17 +50,16 @@ bool g_verbose = false;
 bool g_skip_identical = false;
 bool g_mark_differences = false;
 long g_channel_tolerance = 0;
-
 // Resolution to use for rasterization, in DPI
-#define RESOLUTION  300
+long g_resolution = 300;
 
 cairo_surface_t *render_page(PopplerPage *page)
 {
     double w, h;
     poppler_page_get_size(page, &w, &h);
 
-    const int w_px = int(RESOLUTION * w / 72.0);
-    const int h_px = int(RESOLUTION * h / 72.0);
+    const int w_px = int((int)g_resolution * w / 72.0);
+    const int h_px = int((int)g_resolution * h / 72.0);
 
     cairo_surface_t *surface =
         cairo_image_surface_create(CAIRO_FORMAT_RGB24, w_px, h_px);
@@ -77,7 +76,7 @@ cairo_surface_t *render_page(PopplerPage *page)
     // Scale so that PDF output covers the whole surface. Image surface is
     // created with transformation set up so that 1 coordinate unit is 1 pixel;
     // Poppler assumes 1 unit = 1 point.
-    cairo_scale(cr, RESOLUTION / 72.0, RESOLUTION / 72.0);
+    cairo_scale(cr, (int)g_resolution / 72.0, (int)g_resolution / 72.0);
 
     poppler_page_render(page, cr);
 
@@ -328,7 +327,7 @@ bool page_compare(cairo_t *cr_out,
             // render the difference as high-resolution bitmap
 
             cairo_save(cr_out);
-            cairo_scale(cr_out, 72.0 / RESOLUTION, 72.0 / RESOLUTION);
+            cairo_scale(cr_out, 72.0 / g_resolution, 72.0 / g_resolution);
 
             cairo_set_source_surface(cr_out, diff ? diff : img1, 0, 0);
             cairo_paint(cr_out);
@@ -896,6 +895,10 @@ int main(int argc, char *argv[])
         { wxCMD_LINE_OPTION,
                   NULL, wxT28("channel-tolerance"), wxT28("consider channel values to be equal if within specified tolerance"),
                   wxCMD_LINE_VAL_NUMBER },
+				  
+		{ wxCMD_LINE_OPTION,
+                  NULL, wxT28("dpi"), wxT28("rasterization dpi"),
+                  wxCMD_LINE_VAL_NUMBER },
 
         { wxCMD_LINE_SWITCH,
                   NULL, wxT28("view"), wxT28("view the differences in a window") },
@@ -963,6 +966,14 @@ int main(int argc, char *argv[])
     {
         if (g_channel_tolerance < 0 || g_channel_tolerance > 255) {
             fprintf(stderr, "Invalid channel-tolerance: %ld. Valid range is 0(default, exact matching)-255\n", g_channel_tolerance);
+            return 2;
+	}
+    }
+	
+	if ( parser.Found(wxT("dpi"), &g_resolution) )
+    {
+        if (g_resolution < 1 || g_resolution > 2400) {
+            fprintf(stderr, "Invalid dpi: %ld. Valid range is 1-2400\n", g_resolution);
             return 2;
 	}
     }
