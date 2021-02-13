@@ -193,11 +193,10 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                 unsigned char cg2 = *(data2 + x + 1);
                 unsigned char cb2 = *(data2 + x + 2);
 
-
-		if ( cr1 > (cr2+g_channel_tolerance) || cr1 < (cr2-g_channel_tolerance)
-		  || cg1 > (cg2+g_channel_tolerance) || cg1 < (cg2-g_channel_tolerance)
-		  || cb1 > (cb2+g_channel_tolerance) || cb1 < (cb2-g_channel_tolerance)
-		   )
+                if ( cr1 > (cr2+g_channel_tolerance) || cr1 < (cr2-g_channel_tolerance)
+                  || cg1 > (cg2+g_channel_tolerance) || cg1 < (cg2-g_channel_tolerance)
+                  || cb1 > (cb2+g_channel_tolerance) || cb1 < (cb2-g_channel_tolerance)
+                   )
                 {
                     changes = true;
                     linediff = true;
@@ -223,12 +222,14 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                 *(out + x + 2) = cb2;
             }
 
-            if (g_mark_differences && linediff) {
-                for (int x = 0; x < (10 < r2.width ? 10 : r2.width) * 4; x+=4) {
+            if (g_mark_differences && linediff)
+            {
+                for (int x = 0; x < (10 < r2.width ? 10 : r2.width) * 4; x+=4)
+                {
                    *(out + x + 0) = 0;
                    *(out + x + 1) = 0;
                    *(out + x + 2) = 255;
-		}
+                }
             }
         }
     }
@@ -895,8 +896,8 @@ int main(int argc, char *argv[])
         { wxCMD_LINE_OPTION,
                   NULL, wxT28("channel-tolerance"), wxT28("consider channel values to be equal if within specified tolerance"),
                   wxCMD_LINE_VAL_NUMBER },
-				  
-		{ wxCMD_LINE_OPTION,
+
+        { wxCMD_LINE_OPTION,
                   NULL, wxT28("dpi"), wxT28("rasterization dpi"),
                   wxCMD_LINE_VAL_NUMBER },
 
@@ -914,7 +915,7 @@ int main(int argc, char *argv[])
     wxCmdLineParser parser(cmd_line_desc, argc, argv);
 
     // Set default output to stderr
-    wxMessageOutput::Set(new wxMessageOutputStderr); 
+    wxMessageOutput::Set(new wxMessageOutputStderr);
 
     switch ( parser.Parse() )
     {
@@ -969,7 +970,7 @@ int main(int argc, char *argv[])
             return 2;
 	}
     }
-	
+
 	if ( parser.Found(wxT("dpi"), &g_resolution) )
     {
         if (g_resolution < 1 || g_resolution > 2400) {
