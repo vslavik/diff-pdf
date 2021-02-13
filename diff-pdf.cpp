@@ -51,7 +51,8 @@ bool g_skip_identical = false;
 bool g_mark_differences = false;
 long g_channel_tolerance = 0;
 // Resolution to use for rasterization, in DPI
-long g_resolution = 300;
+#define DEFAULT_RESOLUTION 300
+long g_resolution = DEFAULT_RESOLUTION;
 
 cairo_surface_t *render_page(PopplerPage *page)
 {
@@ -881,7 +882,7 @@ int main(int argc, char *argv[])
                   wxCMD_LINE_VAL_NUMBER },
 
         { wxCMD_LINE_OPTION,
-                  NULL, "dpi", "rasterization dpi",
+                  NULL, "dpi", "rasterization resolution (default: " wxSTRINGIZE(DEFAULT_RESOLUTION) " dpi)",
                   wxCMD_LINE_VAL_NUMBER },
 
         { wxCMD_LINE_SWITCH,
@@ -957,7 +958,7 @@ int main(int argc, char *argv[])
 	if ( parser.Found("dpi", &g_resolution) )
     {
         if (g_resolution < 1 || g_resolution > 2400) {
-            fprintf(stderr, "Invalid dpi: %ld. Valid range is 1-2400\n", g_resolution);
+            fprintf(stderr, "Invalid dpi: %ld. Valid range is 1-2400 (default: %d)\n", g_resolution, DEFAULT_RESOLUTION);
             return 2;
 	}
     }
