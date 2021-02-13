@@ -50,9 +50,15 @@ bool g_verbose = false;
 bool g_skip_identical = false;
 bool g_mark_differences = false;
 long g_channel_tolerance = 0;
+bool g_grayscale = false;
 // Resolution to use for rasterization, in DPI
 #define DEFAULT_RESOLUTION 300
 long g_resolution = DEFAULT_RESOLUTION;
+
+inline unsigned char to_grayscale(unsigned char r, unsigned char g, unsigned char b)
+{
+    return (unsigned char)(0.2126 * r + 0.7152 * g + 0.0722 * b);
+}
 
 cairo_surface_t *render_page(PopplerPage *page)
 {
@@ -219,8 +225,20 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                     }
                 }
 
-                // change the B channel to be from s2; RG will be s1
-                *(out + x + 2) = cb2;
+                if (g_grayscale)
+                {
+                    // convert both images to grayscale, use blue for s1, red for s2
+                    unsigned char gray1 = to_grayscale(cr1, cg1, cb1);
+                    unsigned char gray2 = to_grayscale(cr2, cg2, cb2);
+                    *(out + x + 0) = gray2;
+                    *(out + x + 1) = (gray1 + gray2) / 2;
+                    *(out + x + 2) = gray1;
+                }
+                else
+                {
+                    // change the B channel to be from s2; RG will be s1
+                    *(out + x + 2) = cb2;
+                }
             }
 
             if (g_mark_differences && linediff)
@@ -873,6 +891,9 @@ int main(int argc, char *argv[])
         { wxCMD_LINE_SWITCH,
                   "m", "mark-differences", "additionally mark differences on left side" },
 
+        { wxCMD_LINE_SWITCH,
+                  "g", "grayscale", "only differences will be in color, unchanged parts will show as gray" },
+
         { wxCMD_LINE_OPTION,
                   NULL, "output-diff", "output differences to given PDF file",
                   wxCMD_LINE_VAL_STRING },
@@ -921,6 +942,9 @@ int main(int argc, char *argv[])
 
     if ( parser.Found("mark-differences") )
         g_mark_differences = true;
+
+    if ( parser.Found("grayscale") )
+        g_grayscale = true;
 
     wxFileName file1(parser.GetParam(0));
     wxFileName file2(parser.GetParam(1));
