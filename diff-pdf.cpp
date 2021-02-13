@@ -404,7 +404,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
                           page,
                           wxString::Format
                           (
-                              wxT("Comparing page %d of %d..."),
+                              "Comparing page %d of %d...",
                               page+1,
                               pages_total
                           )
@@ -433,8 +433,8 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
             page_same = page_compare(cr_out, page1, page2,
                                      &thumbnail, Gutter::WIDTH);
 
-            wxString label1(wxT("(null)"));
-            wxString label2(wxT("(null)"));
+            wxString label1("(null)");
+            wxString label2("(null)");
 
             if ( page1 )
             {
@@ -456,7 +456,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
             if ( label1 == label2 )
                 label = label1;
             else
-                label = label1 + wxT(" / ") + label2;
+                label = label1 + " / " + label2;
 
             gutter->AddPage(label, thumbnail);
         }
@@ -523,8 +523,8 @@ const int ID_GUTTER = wxNewId();
 #define BMP_OFFSET_DOWN    BMP_ARTPROV(wxART_GO_DOWN)
 
 #ifdef __WXGTK__
-    #define BMP_ZOOM_IN    BMP_ARTPROV(wxT("gtk-zoom-in"))
-    #define BMP_ZOOM_OUT   BMP_ARTPROV(wxT("gtk-zoom-out"))
+    #define BMP_ZOOM_IN    BMP_ARTPROV("gtk-zoom-in")
+    #define BMP_ZOOM_OUT   BMP_ARTPROV("gtk-zoom-out")
 #else
     #include "gtk-zoom-in.xpm"
     #include "gtk-zoom-out.xpm"
@@ -555,22 +555,22 @@ public:
                     wxTB_HORIZONTAL | wxTB_FLAT | wxTB_HORZ_TEXT
                 );
 
-        toolbar->AddTool(ID_PREV_PAGE, wxT("Previous"), BMP_PREV_PAGE,
-                         wxT("Go to previous page (PgUp)"));
-        toolbar->AddTool(ID_NEXT_PAGE, wxT("Next"), BMP_NEXT_PAGE,
-                         wxT("Go to next page (PgDown)"));
-        toolbar->AddTool(ID_ZOOM_IN, wxT("Zoom in"), BMP_ZOOM_IN,
-                         wxT("Make the page larger (Ctrl +)"));
-        toolbar->AddTool(ID_ZOOM_OUT, wxT("Zoom out"), BMP_ZOOM_OUT,
-                         wxT("Make the page smaller (Ctrl -)"));
-        toolbar->AddTool(ID_OFFSET_LEFT, wxT(""), BMP_OFFSET_LEFT,
-                         wxT("Offset one of the pages to the left (Ctrl left)"));
-        toolbar->AddTool(ID_OFFSET_RIGHT, wxT(""), BMP_OFFSET_RIGHT,
-                         wxT("Offset one of the pages to the right (Ctrl right)"));
-        toolbar->AddTool(ID_OFFSET_UP, wxT(""), BMP_OFFSET_UP,
-                         wxT("Offset one of the pages up (Ctrl up)"));
-        toolbar->AddTool(ID_OFFSET_DOWN, wxT(""), BMP_OFFSET_DOWN,
-                         wxT("Offset one of the pages down (Ctrl down)"));
+        toolbar->AddTool(ID_PREV_PAGE, "Previous", BMP_PREV_PAGE,
+                         "Go to previous page (PgUp)");
+        toolbar->AddTool(ID_NEXT_PAGE, "Next", BMP_NEXT_PAGE,
+                         "Go to next page (PgDown)");
+        toolbar->AddTool(ID_ZOOM_IN, "Zoom in", BMP_ZOOM_IN,
+                         "Make the page larger (Ctrl +)");
+        toolbar->AddTool(ID_ZOOM_OUT, "Zoom out", BMP_ZOOM_OUT,
+                         "Make the page smaller (Ctrl -)");
+        toolbar->AddTool(ID_OFFSET_LEFT, "", BMP_OFFSET_LEFT,
+                         "Offset one of the pages to the left (Ctrl left)");
+        toolbar->AddTool(ID_OFFSET_RIGHT, "", BMP_OFFSET_RIGHT,
+                         "Offset one of the pages to the right (Ctrl right)");
+        toolbar->AddTool(ID_OFFSET_UP, "", BMP_OFFSET_UP,
+                         "Offset one of the pages up (Ctrl up)");
+        toolbar->AddTool(ID_OFFSET_DOWN, "", BMP_OFFSET_DOWN,
+                         "Offset one of the pages down (Ctrl down)");
 
         toolbar->Realize();
         SetToolBar(toolbar);
@@ -605,8 +605,8 @@ public:
         m_doc1 = doc1;
         m_doc2 = doc2;
 
-        wxProgressDialog progress(wxT("Comparing documents"),
-                                  wxT("Comparing documents..."),
+        wxProgressDialog progress("Comparing documents",
+                                  "Comparing documents...",
                                   wxMax(poppler_document_get_n_pages(m_doc1),
                                         poppler_document_get_n_pages(m_doc2)),
                                   this,
@@ -691,12 +691,12 @@ private:
         (
             wxString::Format
             (
-                wxT("Page %d of %d; %d of them %s different, this page %s"),
+                "Page %d of %d; %d of them %s different, this page %s",
                 m_cur_page + 1 /* humans prefer 1-based counting*/,
                 (int)m_pages.size(),
                 m_diff_count,
-                m_diff_count == 1 ? wxT("is") : wxT("are"),
-                m_pages[m_cur_page] ? wxT("differs") : wxT("is unchanged")
+                m_diff_count == 1 ? "is" : "are",
+                m_pages[m_cur_page] ? "differs" : "is unchanged"
             ),
             0
         );
@@ -705,7 +705,7 @@ private:
         (
             wxString::Format
             (
-                wxT("%.1f%% [offset %d,%d]"),
+                "%.1f%% [offset %d,%d]",
                 m_viewer->GetZoom() * 100.0,
                 m_offset.x, m_offset.y
             ),
@@ -810,23 +810,18 @@ public:
         // can query the window for its size)
         Yield();
 
-#if !wxCHECK_VERSION(2,9,0)
-        SetFrameDocs();
-#endif
-
         return true;
     }
 
     void SetData(const wxString& file1, PopplerDocument *doc1,
                  const wxString& file2, PopplerDocument *doc2)
     {
-        m_title = wxString::Format(wxT("Differences between %s and %s"), file1.c_str(), file2.c_str());
+        m_title = wxString::Format("Differences between %s and %s", file1.c_str(), file2.c_str());
         m_doc1 = doc1;
         m_doc2 = doc2;
     }
 
 protected:
-#if wxCHECK_VERSION(2,9,0)
     virtual void OnEventLoopEnter(wxEventLoopBase *loop)
     {
         wxApp::OnEventLoopEnter(loop);
@@ -834,9 +829,7 @@ protected:
         if ( loop->IsMain() )
             SetFrameDocs();
     }
-#endif // wx >= 2.9.0
 
-private:
     void SetFrameDocs()
     {
         wxASSERT( m_tlw );
@@ -864,50 +857,40 @@ int main(int argc, char *argv[])
     wxAppConsole::CheckBuildOptions(WX_BUILD_OPTIONS_SIGNATURE, "diff-pdf");
     wxInitializer wxinitializer(argc, argv);
 
-#if !GLIB_CHECK_VERSION(2,36,0)
-    g_type_init();
-#endif
-
     static const wxCmdLineEntryDesc cmd_line_desc[] =
     {
-        #if wxCHECK_VERSION(2,9,0)
-            #define wxT28(s) s
-        #else
-            #define wxT28(s) wxT(s)
-        #endif
-
         { wxCMD_LINE_SWITCH,
-                  wxT28("h"), wxT28("help"), wxT28("show this help message"),
+                  "h", "help", "show this help message",
                   wxCMD_LINE_VAL_NONE, wxCMD_LINE_OPTION_HELP },
 
         { wxCMD_LINE_SWITCH,
-                  wxT28("v"), wxT28("verbose"), wxT28("be verbose") },
+                  "v", "verbose", "be verbose" },
 
         { wxCMD_LINE_SWITCH,
-                  wxT28("s"), wxT28("skip-identical"), wxT28("only output pages with differences") },
+                  "s", "skip-identical", "only output pages with differences" },
 
         { wxCMD_LINE_SWITCH,
-                  wxT28("m"), wxT28("mark-differences"), wxT28("additionally mark differences on left side") },
+                  "m", "mark-differences", "additionally mark differences on left side" },
 
         { wxCMD_LINE_OPTION,
-                  NULL, wxT28("output-diff"), wxT28("output differences to given PDF file"),
+                  NULL, "output-diff", "output differences to given PDF file",
                   wxCMD_LINE_VAL_STRING },
 
         { wxCMD_LINE_OPTION,
-                  NULL, wxT28("channel-tolerance"), wxT28("consider channel values to be equal if within specified tolerance"),
+                  NULL, "channel-tolerance", "consider channel values to be equal if within specified tolerance",
                   wxCMD_LINE_VAL_NUMBER },
 
         { wxCMD_LINE_OPTION,
-                  NULL, wxT28("dpi"), wxT28("rasterization dpi"),
+                  NULL, "dpi", "rasterization dpi",
                   wxCMD_LINE_VAL_NUMBER },
 
         { wxCMD_LINE_SWITCH,
-                  NULL, wxT28("view"), wxT28("view the differences in a window") },
+                  NULL, "view", "view the differences in a window" },
 
         { wxCMD_LINE_PARAM,
-                  NULL, NULL, wxT28("file1.pdf"), wxCMD_LINE_VAL_STRING },
+                  NULL, NULL, "file1.pdf", wxCMD_LINE_VAL_STRING },
         { wxCMD_LINE_PARAM,
-                  NULL, NULL, wxT28("file2.pdf"), wxCMD_LINE_VAL_STRING },
+                  NULL, NULL, "file2.pdf", wxCMD_LINE_VAL_STRING },
 
         { wxCMD_LINE_NONE }
     };
@@ -929,13 +912,13 @@ int main(int argc, char *argv[])
             return 2;
     }
 
-    if ( parser.Found(wxT("verbose")) )
+    if ( parser.Found("verbose") )
         g_verbose = true;
 
-    if ( parser.Found(wxT("skip-identical")) )
+    if ( parser.Found("skip-identical") )
         g_skip_identical = true;
 
-    if ( parser.Found(wxT("mark-differences")) )
+    if ( parser.Found("mark-differences") )
         g_mark_differences = true;
 
     wxFileName file1(parser.GetParam(0));
@@ -963,7 +946,7 @@ int main(int argc, char *argv[])
         return 3;
     }
 
-    if ( parser.Found(wxT("channel-tolerance"), &g_channel_tolerance) )
+    if ( parser.Found("channel-tolerance", &g_channel_tolerance) )
     {
         if (g_channel_tolerance < 0 || g_channel_tolerance > 255) {
             fprintf(stderr, "Invalid channel-tolerance: %ld. Valid range is 0(default, exact matching)-255\n", g_channel_tolerance);
@@ -971,7 +954,7 @@ int main(int argc, char *argv[])
 	}
     }
 
-	if ( parser.Found(wxT("dpi"), &g_resolution) )
+	if ( parser.Found("dpi", &g_resolution) )
     {
         if (g_resolution < 1 || g_resolution > 2400) {
             fprintf(stderr, "Invalid dpi: %ld. Valid range is 1-2400\n", g_resolution);
@@ -983,11 +966,11 @@ int main(int argc, char *argv[])
     int retval = 0;
 
     wxString pdf_file;
-    if ( parser.Found(wxT("output-diff"), &pdf_file) )
+    if ( parser.Found("output-diff", &pdf_file) )
     {
         retval = doc_compare(doc1, doc2, pdf_file.utf8_str(), NULL) ? 0 : 1;
     }
-    else if ( parser.Found(wxT("view")) )
+    else if ( parser.Found("view") )
     {
         wxGetApp().SetData(parser.GetParam(0), doc1,
                            parser.GetParam(1), doc2);

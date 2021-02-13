@@ -41,7 +41,7 @@ AC_LANG(C++)
 dnl === Library checks ===
 
 PKG_CHECK_MODULES(POPPLER,
-                  [poppler-glib >= 0.10 cairo-pdf])
+                  [glib-2.0 >= 2.36 poppler-glib >= 0.10 cairo-pdf])
 
 AM_OPTIONS_WXCONFIG
 AM_PATH_WXCONFIG([3.0.0], [wxfound=1], [wxfound=0], [core,base])
