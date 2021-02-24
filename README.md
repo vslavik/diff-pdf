@@ -90,7 +90,7 @@ $ sudo yum install wxGTK wxGTK-devel poppler-glib poppler-glib-devel
 
 ```
 $ sudo apt-get install make automake g++
-$ sudo apt-get install libpoppler-glib-dev poppler-utils libwxgtk3.0-dev
+$ sudo apt-get install libpoppler-glib-dev poppler-utils libwxgtk3.0-gtk3-dev
 ```
 
 #### macOS:
