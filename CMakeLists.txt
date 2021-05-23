@@ -15,4 +15,4 @@ target_link_libraries(diff-pdf ${POPPLERGLIB_LIBRARIES})
 target_link_directories(diff-pdf PRIVATE
     ${POPPLERGLIB_LIBRARY_DIRS}
 )
-install(TARGETS diff-pdf)
+install(TARGETS diff-pdf RUNTIME DESTINATION build)
