@@ -14,4 +14,4 @@ target_include_directories(diff-pdf PRIVATE
 
 target_link_libraries(diff-pdf ${POPPLERGLIB_LIBRARIES} stdc++fs)
 target_link_directories(diff-pdf PRIVATE ${POPPLERGLIB_LIBRARY_DIRS})
-install(TARGETS diff-pdf RUNTIME DESTINATION /usr/local/bin)
+install(TARGETS diff-pdf RUNTIME DESTINATION bin)
