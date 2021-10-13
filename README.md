@@ -17,21 +17,21 @@ given the `--output-diff` option, it produces a PDF file with visually
 highlighted differences:
 
 ```
-$ diff-pdf --output-diff=diff.pdf a.pdf b.pdf
+diff-pdf --output-diff=diff.pdf a.pdf b.pdf
 ```
 
 Another option is to compare the two files visually in a simple GUI, using
 the `--view` argument:
 
 ```
-$ diff-pdf --view a.pdf b.pdf
+diff-pdf --view a.pdf b.pdf
 ```
 
 This opens a window that lets you view the files' pages and zoom in on details.
 It is also possible to shift the two pages relatively to each other using
 Ctrl-arrows (Cmd-arrows on MacOS). This is useful for identifying translation-only differences.
 
-See the output of `$ diff-pdf --help` for complete list of options.
+See the output of `diff-pdf --help` for complete list of options.
 
 
 ## Obtaining the binaries
@@ -43,15 +43,15 @@ work from any place you unpack it to.
 
 On Mac, if you use [Homebrew](https://brew.sh), you can use it to install diff-pdf with it:
 ```
-$ brew install diff-pdf
+brew install diff-pdf
 ```
 On Mac, if you use [Macports](https://macports.org), you can install diff-pdf with:
 ```
-$ port install diff-pdf
+port install diff-pdf
 ```
 On  Fedora and CentOS 8:
 ```
-$ sudo dnf install diff-pdf
+sudo dnf install diff-pdf
 ```
 Precompiled version for openSUSE can be downloaded from the
 [openSUSE build service](http://software.opensuse.org).
@@ -63,10 +63,10 @@ The build system uses Automake and so a Unix or Unix-like environment (Cygwin
 or MSYS) is required. Compilation is done in the usual way:
 
 ```
-$ ./bootstrap
-$ ./configure
-$ make
-$ make install
+./bootstrap
+./configure
+make
+make install
 ```
 
 (Note that the first step, running the `./bootstrap` script, is only required
@@ -82,34 +82,34 @@ As for dependencies, diff-pdf requires the following libraries:
 #### CentOS:
 
 ```
-$ sudo yum groupinstall "Development Tools"
-$ sudo yum install wxGTK wxGTK-devel poppler-glib poppler-glib-devel
+sudo yum groupinstall "Development Tools"
+sudo yum install wxGTK wxGTK-devel poppler-glib poppler-glib-devel
 ```
 
 #### Ubuntu:
 
 ```
-$ sudo apt-get install make automake g++
-$ sudo apt-get install libpoppler-glib-dev poppler-utils libwxgtk3.0-gtk3-dev
+sudo apt-get install make automake g++
+sudo apt-get install libpoppler-glib-dev poppler-utils libwxgtk3.0-gtk3-dev
 ```
 
 #### macOS:
 Install Command Line Tools for Xcode:
 
 ```
-$ xcode-select --install
+xcode-select --install
 ```
 
 and install [Homebrew](https://brew.sh) or [MacPorts](https://www.macports.org) to manage dependencies, then:
 
 ```
-$ brew install automake autoconf wxmac poppler cairo pkg-config
+brew install automake autoconf wxmac poppler cairo pkg-config
 ```
 
 or
 
 ```
-$ sudo port install automake autoconf wxWidgets-3.0 poppler cairo pkgconfig
+sudo port install automake autoconf wxWidgets-3.0 poppler cairo pkgconfig
 ```
 
 Note that many more libraries are required on Windows, where none of the
@@ -131,22 +131,22 @@ sources.
 included with MSYS, using these commands:
 
     ```
-    $ pacman -Syu
-    $ pacman -S automake autoconf pkg-config make zip
-    $ pacman -S mingw-w64-i686-{gcc,poppler,wxWidgets}
+    pacman -Syu
+    pacman -S automake autoconf pkg-config make zip
+    pacman -S mingw-w64-i686-{gcc,poppler,wxWidgets}
     ```
 
 1. Build diff-pdf in the same way as in the instructions for Unix above:
 
     ```
-    $ ./bootstrap  # only if building from git repository
-    $ ./configure
-    $ make
+    ./bootstrap  # only if building from git repository
+    ./configure
+    make
     ```
 
 1. To build a ZIP archive will all DLLs, run
     ```
-    $ make windows-dist
+    make windows-dist
     ```
 
 
