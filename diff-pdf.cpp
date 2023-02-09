@@ -50,6 +50,8 @@ bool g_verbose = false;
 bool g_skip_identical = false;
 bool g_mark_differences = false;
 long g_channel_tolerance = 0;
+long g_total_pixel_tolerance = 0;
+long g_total_pixel_diff_count = 0;
 bool g_grayscale = false;
 // Resolution to use for rasterization, in DPI
 #define DEFAULT_RESOLUTION 300
@@ -205,6 +207,7 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                   || cb1 > (cb2+g_channel_tolerance) || cb1 < (cb2-g_channel_tolerance)
                    )
                 {
+                    g_total_pixel_diff_count++;
                     changes = true;
                     linediff = true;
 
@@ -511,6 +514,15 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
 
     if (g_verbose)
         printf("%d of %d pages differ.\n", pages_differ, pages_total);
+
+    // If we were given a total pixel tolerance of more than zero, then
+    // we will compare this to the total number of pixels that differ
+    // between the two PDFs. If the total number of pixels that differ
+    // is less than or equal to the total pixel tolerance, then we will
+    // consider the PDFs to be the same.
+    if (g_total_pixel_tolerance > 0) {
+        return (g_total_pixel_diff_count <= g_total_pixel_tolerance);
+    }
 
     // are doc1 and doc1 the same?
     return (pages_differ == 0) && (pages1 == pages2);
@@ -903,6 +915,10 @@ int main(int argc, char *argv[])
                   wxCMD_LINE_VAL_NUMBER },
 
         { wxCMD_LINE_OPTION,
+                  NULL, "total-pixel-tolerance", "total number of pixels allowed to be different. If count of pixel differences is greater than this, the return code will be non-zero",
+                  wxCMD_LINE_VAL_NUMBER },
+
+        { wxCMD_LINE_OPTION,
                   NULL, "dpi", "rasterization resolution (default: " wxSTRINGIZE(DEFAULT_RESOLUTION) " dpi)",
                   wxCMD_LINE_VAL_NUMBER },
 
@@ -969,6 +985,14 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Error opening %s: %s\n", (const char*) parser.GetParam(1).c_str(), err->message);
         g_error_free(err);
         return 3;
+    }
+
+    if ( parser.Found("total-pixel-tolerance", &g_total_pixel_tolerance) )
+    {
+        if (g_total_pixel_tolerance < 0) {
+            fprintf(stderr, "Invalid total-pixel-tolerance: %ld. Must be 0 or more\n", g_total_pixel_tolerance);
+            return 2;
+        }
     }
 
     if ( parser.Found("channel-tolerance", &g_channel_tolerance) )
