@@ -16,5 +16,7 @@ autom4te.cache
 aclocal.m4
 mingw
 
-*.o # compiled (and unlinked) objects
-diff-pdf # the final binary
+# compiled (and unlinked) objects
+*.o
+# the final binary
+diff-pdf
