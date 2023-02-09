@@ -50,6 +50,7 @@ bool g_verbose = false;
 bool g_skip_identical = false;
 bool g_mark_differences = false;
 long g_channel_tolerance = 0;
+long g_per_page_pixel_tolerance = 0;
 bool g_grayscale = false;
 // Resolution to use for rasterization, in DPI
 #define DEFAULT_RESOLUTION 300
@@ -98,12 +99,13 @@ cairo_surface_t *render_page(PopplerPage *page)
 // Creates image of differences between s1 and s2. If the offset is specified,
 // then s2 is displaced by it. If thumbnail and thumbnail_width are specified,
 // then a thumbnail with highlighted differences is created too.
-cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
+cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
                              int offset_x = 0, int offset_y = 0,
                              wxImage *thumbnail = NULL, int thumbnail_width = -1)
 {
     assert( s1 || s2 );
 
+    long pixel_diff_count = 0;
     wxRect r1, r2;
 
     if ( s1 )
@@ -205,6 +207,7 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
                   || cb1 > (cb2+g_channel_tolerance) || cb1 < (cb2-g_channel_tolerance)
                    )
                 {
+                    pixel_diff_count++;
                     changes = true;
                     linediff = true;
 
@@ -313,7 +316,11 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
         }
     }
 
-    if ( changes )
+    if ( g_verbose )
+        printf("page %d has %ld pixels that differ\n", page, pixel_diff_count);
+
+    // If we specified a tolerance, then return if we have exceeded that for this page
+    if ( g_per_page_pixel_tolerance == 0 ? changes : pixel_diff_count > g_per_page_pixel_tolerance)
     {
         return diff;
     }
@@ -329,14 +336,14 @@ cairo_surface_t *diff_images(cairo_surface_t *s1, cairo_surface_t *s2,
 // differences or unmodified page, if there are no diffs) is drawn to it.
 // If thumbnail and thumbnail_width are specified, then a thumbnail with
 // highlighted differences is created too.
-bool page_compare(cairo_t *cr_out,
+bool page_compare(int page, cairo_t *cr_out,
                   PopplerPage *page1, PopplerPage *page2,
                   wxImage *thumbnail = NULL, int thumbnail_width = -1)
 {
     cairo_surface_t *img1 = page1 ? render_page(page1) : NULL;
     cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
 
-    cairo_surface_t *diff = diff_images(img1, img2, 0, 0,
+    cairo_surface_t *diff = diff_images(page, img1, img2, 0, 0,
                                         thumbnail, thumbnail_width);
     const bool has_diff = (diff != NULL);
 
@@ -449,7 +456,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
         if ( gutter )
         {
             wxImage thumbnail;
-            page_same = page_compare(cr_out, page1, page2,
+            page_same = page_compare(page, cr_out, page1, page2,
                                      &thumbnail, Gutter::WIDTH);
 
             wxString label1("(null)");
@@ -481,7 +488,7 @@ bool doc_compare(PopplerDocument *doc1, PopplerDocument *doc2,
         }
         else
         {
-            page_same = page_compare(cr_out, page1, page2);
+            page_same = page_compare(page, cr_out, page1, page2);
         }
 
         if ( differences )
@@ -683,6 +690,7 @@ private:
         wxImage thumbnail;
         cairo_surface_t *diff = diff_images
                                 (
+                                    m_cur_page,
                                     img1, img2,
                                     m_offset.x, m_offset.y,
                                     &thumbnail, Gutter::WIDTH
@@ -903,6 +911,10 @@ int main(int argc, char *argv[])
                   wxCMD_LINE_VAL_NUMBER },
 
         { wxCMD_LINE_OPTION,
+                  NULL, "per-page-pixel-tolerance", "total number of pixels allowed to be different per page before specifying the page is different",
+                  wxCMD_LINE_VAL_NUMBER },
+
+        { wxCMD_LINE_OPTION,
                   NULL, "dpi", "rasterization resolution (default: " wxSTRINGIZE(DEFAULT_RESOLUTION) " dpi)",
                   wxCMD_LINE_VAL_NUMBER },
 
@@ -969,6 +981,14 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Error opening %s: %s\n", (const char*) parser.GetParam(1).c_str(), err->message);
         g_error_free(err);
         return 3;
+    }
+
+    if ( parser.Found("per-page-pixel-tolerance", &g_per_page_pixel_tolerance) )
+    {
+        if (g_per_page_pixel_tolerance < 0) {
+            fprintf(stderr, "Invalid per-page-pixel-tolerance: %ld. Must be 0 or more\n", g_per_page_pixel_tolerance);
+            return 2;
+        }
     }
 
     if ( parser.Found("channel-tolerance", &g_channel_tolerance) )
