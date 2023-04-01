@@ -5,7 +5,7 @@ with finishing it. However, please do not expect any kind of support, including
 implementation of feature requests or fixes. If you're not a developer and/or
 willing to get your hands dirty, this tool is probably not for you.*
 
-[![Build status](https://ci.appveyor.com/api/projects/status/m6d8n2kcyvk3cqi6?svg=true)](https://ci.appveyor.com/project/vslavik/diff-pdf)
+[![Build](https://github.com/vslavik/diff-pdf/actions/workflows/build.yml/badge.svg)](https://github.com/vslavik/diff-pdf/actions/workflows/build.yml)
 
 ## Usage
 

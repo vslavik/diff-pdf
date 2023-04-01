@@ -11,19 +11,30 @@ EXE=$2
 mkdir -p $OUTPUT
 rm -rf $OUTPUT/*
 
-cp -a $EXE $OUTPUT
+add_binary()
+{
+    destfile="$OUTPUT/`basename $1`"
+    if [ ! -f $destfile ] ; then
+        cp -anv $1 $destfile
+        objdump -x $1 | grep "DLL Name" | cut -d: -f2 >${destfile}.objdeps
+    fi
+}
+
 last_file_count=0
+add_binary $EXE
 
 while true ; do
-    file_count=`ls -1 $OUTPUT/* | wc -l`
+    file_count=`ls -1 $OUTPUT/*.objdeps | wc -l`
     echo "count=$file_count"
     if [ $file_count -eq $last_file_count ] ; then break ; fi
     last_file_count=$file_count
 
-    objdump -x $OUTPUT/* | grep "DLL Name" | cut -d: -f2 | sort | uniq | while read i ; do
+    cat $OUTPUT/*.objdeps | sort | uniq | while read i ; do
         dll=`echo $i`  # fixup weird line endings
         if [[ -f /mingw32/bin/$dll ]] ; then
-            cp -anv /mingw32/bin/$dll $OUTPUT
+            add_binary /mingw32/bin/$dll
         fi
     done
 done
+
+rm -rf $OUTPUT/*.objdeps
