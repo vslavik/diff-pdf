@@ -141,7 +141,7 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
         thumbnail_scale = float(thumbnail_width) / float(rdiff.width);
         thumbnail_height = int(rdiff.height * thumbnail_scale);
         thumbnail->Create(thumbnail_width, thumbnail_height);
-        // initalize the thumbnail with a white rectangle:
+        // initialize the thumbnail with a white rectangle:
         thumbnail->SetRGB(wxRect(), 255, 255, 255);
     }
 

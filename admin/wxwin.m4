@@ -625,7 +625,7 @@ AC_DEFUN([WX_STANDARD_OPTIONS],
         dnl   will build your library in static mode against the first available
         dnl   shared build of wxWidgets.
         dnl
-        dnl   Note that's not possible to do the viceversa:
+        dnl   Note that's not possible to do the vice-versa:
         dnl
         dnl      ./configure --enable-shared --without-wxshared
         dnl
