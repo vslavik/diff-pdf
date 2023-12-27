@@ -54,9 +54,13 @@ On Mac, if you use [Macports](https://macports.org), you can install diff-pdf wi
 ```
 $ port install diff-pdf
 ```
-On  Fedora and CentOS 8:
+On Fedora and CentOS 8:
 ```
 $ sudo dnf install diff-pdf
+```
+On Debian 13 (trixie) and later (`-wx` suffix added because `diffpdf` is an existing and different tool):
+```
+$ sudo apt install diff-pdf-wx
 ```
 Precompiled version for openSUSE can be downloaded from the
 [openSUSE build service](http://software.opensuse.org).
@@ -91,11 +95,21 @@ $ sudo yum groupinstall "Development Tools"
 $ sudo yum install wxGTK wxGTK-devel poppler-glib poppler-glib-devel
 ```
 
-#### Ubuntu:
+#### Debian / Ubuntu:
 
 ```
-$ sudo apt-get install make automake g++
-$ sudo apt-get install libpoppler-glib-dev poppler-utils libwxgtk3.0-gtk3-dev
+$ sudo apt-get install build-essential
+```
+
+For Debian 10 (buster) / 11 (bullseye), Ubuntu 20.04 (focal) / 22.04 (jammy):
+```
+$ sudo apt-get install libcairo2-dev libpoppler-glib-dev libwxgtk3.0-gtk3-dev
+```
+
+For Debian 12 (bookworm), Ubuntu 23.04 (lunar) and later versions:
+
+```
+$ sudo apt-get install libcairo2-dev libpoppler-glib-dev libwxgtk3.2-dev
 ```
 
 #### macOS:
