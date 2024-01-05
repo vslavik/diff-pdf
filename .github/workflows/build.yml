@@ -47,9 +47,9 @@ jobs:
     - name: Setup MSYS2 environment
       uses: msys2/setup-msys2@v2
       with:
-        msystem: MINGW32
+        msystem: UCRT64
         update: true
-        install: mingw-w64-i686-gcc automake autoconf pkg-config make zip mingw-w64-i686-poppler mingw-w64-i686-wxWidgets
+        install: mingw-w64-ucrt-x86_64-gcc automake autoconf pkg-config make zip mingw-w64-ucrt-x86_64-poppler mingw-w64-ucrt-x86_64-wxWidgets
 
     - name: Bootstrap
       run: ./bootstrap

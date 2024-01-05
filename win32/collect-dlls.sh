@@ -31,8 +31,8 @@ while true ; do
 
     cat $OUTPUT/*.objdeps | sort | uniq | while read i ; do
         dll=`echo $i`  # fixup weird line endings
-        if [[ -f /mingw32/bin/$dll ]] ; then
-            add_binary /mingw32/bin/$dll
+        if [[ -f /ucrt64/bin/$dll ]] ; then
+            add_binary /ucrt64/bin/$dll
         fi
     done
 done
