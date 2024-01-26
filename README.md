@@ -137,8 +137,8 @@ included with MSYS, using these commands:
 
     ```
     $ pacman -Syu
-    $ pacman -S automake autoconf pkg-config make zip
-    $ pacman -S mingw-w64-i686-{gcc,poppler,wxWidgets}
+    $ pacman -S automake autoconf pkg-config make zip pactoys
+    $ pacboy -S gcc:p poppler:p wxWidgets:p
     ```
 
 1. Build diff-pdf in the same way as in the instructions for Unix above:
