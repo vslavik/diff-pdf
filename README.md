@@ -98,6 +98,12 @@ $ sudo apt-get install make automake g++
 $ sudo apt-get install libpoppler-glib-dev poppler-utils libwxgtk3.0-gtk3-dev
 ```
 
+#### Debian 12:
+
+```
+$ sudo apt-get install make automake g++
+$ sudo apt-get install libpoppler-glib-dev poppler-utils libwxgtk-webview3.2-1 libwxgtk-webview3.2-dev
+```
 #### macOS:
 Install Command Line Tools for Xcode:
 
