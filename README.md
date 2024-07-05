@@ -91,14 +91,14 @@ $ sudo yum groupinstall "Development Tools"
 $ sudo yum install wxGTK wxGTK-devel poppler-glib poppler-glib-devel
 ```
 
-#### Ubuntu:
+#### Ubuntu/(Debian <= 11):
 
 ```
 $ sudo apt-get install make automake g++
 $ sudo apt-get install libpoppler-glib-dev poppler-utils libwxgtk3.0-gtk3-dev
 ```
 
-#### Debian 12:
+#### Debian >= 12:
 
 ```
 $ sudo apt-get install make automake g++
