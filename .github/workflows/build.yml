@@ -7,7 +7,7 @@ jobs:
     name: Build on Linux
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
@@ -27,7 +27,7 @@ jobs:
       run: make dist
 
     - name: Upload source tarball
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: source-tarball
         path: diff-pdf-*.tar.gz
@@ -63,7 +63,7 @@ jobs:
     - name: Build Windows archive
       run: make windows-dist
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         name: windows-binaries
         path: diff-pdf*.zip
