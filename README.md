@@ -33,6 +33,20 @@ Ctrl-arrows (Cmd-arrows on MacOS). This is useful for identifying translation-on
 
 See the output of `$ diff-pdf --help` for complete list of options.
 
+## Command Line Options
+
+| Option                       | Description                                                                                   | Value Range                 | Default Value              |
+|------------------------------|-----------------------------------------------------------------------------------------------|-----------------------------|----------------------------|
+| `-h, --help`                 | Show this help message and exit.                                                              |                             |                            |
+| `-v, --verbose`              | Be verbose.                                                                                   |                             |                            |
+| `-s, --skip-identical`       | Only output pages with differences.                                                           |                             |                            |
+| `-m, --mark-differences`     | Additionally mark differences on the left side.                                               |                             |                            |
+| `-g, --grayscale`            | Only differences will be in color, unchanged parts will show as gray.                         |                             |                            |
+| `--output-diff`              | Output differences to the given PDF file.                                                     | String (file path)          |                            |
+| `--channel-tolerance`        | Consider channel values to be equal if within specified tolerance.                            | Integer (0-255)             | 0                          |
+| `--per-page-pixel-tolerance` | Total number of pixels allowed to be different per page before specifying the page is different. | Integer (0 or more)      | 0                          |
+| `--dpi`                      | Rasterization resolution.                                                                     | Integer (1-2400)            | 300                        |
+| `--view`                     | View the differences overlayed in a window.                                                   |                             |                            |
 
 ## Obtaining the binaries
 
