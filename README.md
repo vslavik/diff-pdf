@@ -58,6 +58,10 @@ On  Fedora and CentOS 8:
 ```
 $ sudo dnf install diff-pdf
 ```
+On Void Linux:
+```
+$ sudo xbps-install -S diff-pdf
+```
 Precompiled version for openSUSE can be downloaded from the
 [openSUSE build service](http://software.opensuse.org).
 
