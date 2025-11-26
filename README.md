@@ -31,6 +31,8 @@ This opens a window that lets you view the files' pages and zoom in on details.
 It is also possible to shift the two pages relatively to each other using
 Ctrl-arrows (Cmd-arrows on MacOS). This is useful for identifying translation-only differences.
 
+You can also use Ctrl < and Ctrl > (Cmd < and Cmd > on MacOS) show the left and right documents respecively. Ctrl d to return back to the diff view.
+
 See the output of `$ diff-pdf --help` for complete list of options.
 
 
