@@ -559,6 +559,10 @@ const int ID_DIFF_DOC = wxNewId();
 #define BMP_OFFSET_UP      BMP_ARTPROV(wxART_GO_UP)
 #define BMP_OFFSET_DOWN    BMP_ARTPROV(wxART_GO_DOWN)
 
+#define BMP_LEFT_DOC       BMP_ARTPROV(wxART_GO_BACK)
+#define BMP_RIGHT_DOC      BMP_ARTPROV(wxART_GO_FORWARD)
+#define BMP_DIFF_DOC       BMP_ARTPROV(wxART_REDO)
+
 #ifdef __WXGTK__
     #define BMP_ZOOM_IN    BMP_ARTPROV("gtk-zoom-in")
     #define BMP_ZOOM_OUT   BMP_ARTPROV("gtk-zoom-out")
@@ -608,12 +612,12 @@ public:
                          "Offset one of the pages up (Ctrl up)");
         toolbar->AddTool(ID_OFFSET_DOWN, "", BMP_OFFSET_DOWN,
                          "Offset one of the pages down (Ctrl down)");
-        toolbar->AddTool(ID_LEFT_DOC, "Left document", BMP_ARTPROV(wxART_GO_BACK),
-                         "Show left document (Ctrl <)");
-        toolbar->AddTool(ID_DIFF_DOC, "Diff document", BMP_ARTPROV(wxART_REDO),
-                         "Show diff document (Ctrl d)");
-        toolbar->AddTool(ID_RIGHT_DOC, "Right document", BMP_ARTPROV(wxART_GO_FORWARD),
-                         "Show right document (Ctrl >)");
+        toolbar->AddTool(ID_LEFT_DOC, "Left document", BMP_LEFT_DOC,
+                         "Show left document (Ctrl+<)");
+        toolbar->AddTool(ID_DIFF_DOC, "Diff document", BMP_DIFF_DOC,
+                         "Show diff document (Ctrl+d)");
+        toolbar->AddTool(ID_RIGHT_DOC, "Right document", BMP_RIGHT_DOC,
+                         "Show right document (Ctrl+>)");
 
         toolbar->Realize();
         SetToolBar(toolbar);
@@ -719,7 +723,7 @@ private:
         switch ( m_display_mode )
         {
             case SHOW_LEFT_DOCUMENT:
-            // 
+                // Try showing the left document; if not available, fall back
                 if ( img1 )
                     m_viewer->Set(img1);
                 else if ( img2 )
@@ -729,6 +733,7 @@ private:
                 break;
 
             case SHOW_RIGHT_DOCUMENT:
+                // Try showing the right document; if not available, fall back
                 if ( img2 )
                     m_viewer->Set(img2);
                 else if ( img1 )
@@ -832,24 +837,27 @@ private:
         DoUpdatePage();
     }
 
+    void ResetOffset()
+    {
+        m_offset = wxPoint(0, 0);
+        DoUpdatePage();
+    }
+
     void OnShowLeftDocument(wxCommandEvent&)
     {
         m_display_mode = SHOW_LEFT_DOCUMENT;
-        m_offset = wxPoint(0, 0);
         DoUpdatePage();
     }
 
     void OnShowDiffDocument(wxCommandEvent&)
     {
         m_display_mode = SHOW_DIFF_DOCUMENT;
-        m_offset = wxPoint(0, 0);
         DoUpdatePage();
     }
 
     void OnShowRightDocument(wxCommandEvent&)
     {
         m_display_mode = SHOW_RIGHT_DOCUMENT;
-        m_offset = wxPoint(0, 0);
         DoUpdatePage();
     }
 
@@ -883,9 +891,9 @@ BEGIN_EVENT_TABLE(DiffFrame, wxFrame)
     EVT_TOOL     (ID_OFFSET_RIGHT, DiffFrame::OnOffsetRight)
     EVT_TOOL     (ID_OFFSET_UP,    DiffFrame::OnOffsetUp)
     EVT_TOOL     (ID_OFFSET_DOWN,  DiffFrame::OnOffsetDown)
-    EVT_TOOL     (ID_LEFT_DOC,    DiffFrame::OnShowLeftDocument)
-    EVT_TOOL     (ID_DIFF_DOC,    DiffFrame::OnShowDiffDocument)
-    EVT_TOOL     (ID_RIGHT_DOC,   DiffFrame::OnShowRightDocument)
+    EVT_TOOL     (ID_LEFT_DOC,     DiffFrame::OnShowLeftDocument)
+    EVT_TOOL     (ID_DIFF_DOC,     DiffFrame::OnShowDiffDocument)
+    EVT_TOOL     (ID_RIGHT_DOC,    DiffFrame::OnShowRightDocument)
 END_EVENT_TABLE()
 
 
