@@ -48,15 +48,8 @@ jobs:
         path: diff-pdf_*.deb
 
   build-macos:
-    name: Build on macOS (${{ matrix.arch }})
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      matrix:
-        include:
-          - runner: macos-latest
-            arch: arm64
-          - runner: macos-13
-            arch: x86_64
+    name: Build on macOS (arm64)
+    runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
 
@@ -83,13 +76,13 @@ jobs:
     - name: Package macOS binary
       run: |
         strip macos-dist/diff-pdf
-        tar czf diff-pdf-macos-${{ matrix.arch }}.tar.gz -C macos-dist diff-pdf libs
+        tar czf diff-pdf-macos-arm64.tar.gz -C macos-dist diff-pdf libs
 
     - name: Upload macOS binary
       uses: actions/upload-artifact@v4
       with:
-        name: macos-binary-${{ matrix.arch }}
-        path: diff-pdf-macos-${{ matrix.arch }}.tar.gz
+        name: macos-binary-arm64
+        path: diff-pdf-macos-arm64.tar.gz
 
   publish-release:
     name: Publish release
@@ -109,13 +102,9 @@ jobs:
         with:
           name: macos-binary-arm64
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: macos-binary-x86_64
-
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
           prerelease: true
-          artifacts: "diff-pdf-linux-x86_64.tar.gz,diff-pdf_*.deb,diff-pdf-macos-arm64.tar.gz,diff-pdf-macos-x86_64.tar.gz"
+          artifacts: "diff-pdf-linux-x86_64.tar.gz,diff-pdf_*.deb,diff-pdf-macos-arm64.tar.gz"
           token: ${{ secrets.GITHUB_TOKEN }}
