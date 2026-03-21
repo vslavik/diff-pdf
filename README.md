@@ -43,7 +43,7 @@ sudo apt-get install libpoppler-glib8 libcairo2
 sudo dnf install poppler-glib cairo
 ```
 
-The macOS binary is standalone — it bundles all required libraries and does not require Homebrew at runtime. Extract the tarball and run `diff-pdf` directly. The binary is arm64 (Apple Silicon); Intel Macs can run it via Rosetta 2.
+The macOS binaries are standalone — they bundle all required libraries and do not require Homebrew at runtime. Download the tarball matching your Mac's architecture (`arm64` for Apple Silicon, `x86_64` for Intel), extract, and run `diff-pdf` directly.
 
 ### Build from source
 
