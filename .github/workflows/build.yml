@@ -47,11 +47,44 @@ jobs:
         name: debian-package
         path: diff-pdf_*.deb
 
+  build-macos:
+    name: Build on macOS
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: brew install automake autoconf pkg-config poppler cairo glib
+
+    - name: Bootstrap
+      run: ./bootstrap
+
+    - name: Configure
+      run: |
+        export PKG_CONFIG_PATH="$(brew --prefix)/lib/pkgconfig:$PKG_CONFIG_PATH"
+        ./configure
+
+    - name: Build
+      run: make
+
+    - name: Package macOS binary
+      run: |
+        mkdir -p macos-dist
+        cp diff-pdf macos-dist/
+        strip macos-dist/diff-pdf
+        tar czf diff-pdf-macos.tar.gz -C macos-dist diff-pdf
+
+    - name: Upload macOS binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-binary
+        path: diff-pdf-macos.tar.gz
+
   publish-release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    needs: [build-linux]
+    needs: [build-linux, build-macos]
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -61,9 +94,13 @@ jobs:
         with:
           name: debian-package
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos-binary
+
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
           prerelease: true
-          artifacts: "diff-pdf-linux-x86_64.tar.gz,diff-pdf_*.deb"
+          artifacts: "diff-pdf-linux-x86_64.tar.gz,diff-pdf_*.deb,diff-pdf-macos.tar.gz"
           token: ${{ secrets.GITHUB_TOKEN }}
