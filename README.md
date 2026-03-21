@@ -34,17 +34,16 @@ See `diff-pdf --help` for all options.
 
 Precompiled binaries for Linux and macOS are available from [GitHub releases](https://github.com/emilianbold/diff-pdf/releases).
 
-**Runtime dependencies:** The binary requires these libraries to be installed:
+**Runtime dependencies:**
 ```bash
 # Ubuntu/Debian
 sudo apt-get install libpoppler-glib8 libcairo2
 
 # Fedora/CentOS
 sudo dnf install poppler-glib cairo
-
-# macOS (Homebrew)
-brew install poppler cairo glib
 ```
+
+The macOS binary is standalone — it bundles all required libraries and does not require Homebrew at runtime. Extract the tarball and run `diff-pdf` directly.
 
 ### Build from source
 

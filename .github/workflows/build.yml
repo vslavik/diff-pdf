@@ -67,12 +67,17 @@ jobs:
     - name: Build
       run: make
 
+    - name: Bundle dylibs
+      run: |
+        brew install dylibbundler
+        mkdir -p macos-dist/libs
+        cp diff-pdf macos-dist/
+        dylibbundler -od -b -x macos-dist/diff-pdf -d macos-dist/libs/ -p @executable_path/libs/
+
     - name: Package macOS binary
       run: |
-        mkdir -p macos-dist
-        cp diff-pdf macos-dist/
         strip macos-dist/diff-pdf
-        tar czf diff-pdf-macos.tar.gz -C macos-dist diff-pdf
+        tar czf diff-pdf-macos.tar.gz -C macos-dist diff-pdf libs
 
     - name: Upload macOS binary
       uses: actions/upload-artifact@v4
