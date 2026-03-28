@@ -42,6 +42,14 @@
 #include <wx/progdlg.h>
 #include <wx/filesys.h>
 
+
+enum DisplayMode
+{
+    SHOW_DIFF_DOCUMENT,
+    SHOW_LEFT_DOCUMENT,
+    SHOW_RIGHT_DOCUMENT
+};
+
 // ------------------------------------------------------------------------
 // PDF rendering functions
 // ------------------------------------------------------------------------
@@ -537,6 +545,9 @@ const int ID_OFFSET_RIGHT = wxNewId();
 const int ID_OFFSET_UP = wxNewId();
 const int ID_OFFSET_DOWN = wxNewId();
 const int ID_GUTTER = wxNewId();
+const int ID_LEFT_DOC = wxNewId();
+const int ID_RIGHT_DOC = wxNewId();
+const int ID_DIFF_DOC = wxNewId();
 
 #define BMP_ARTPROV(id) wxArtProvider::GetBitmap(id, wxART_TOOLBAR)
 
@@ -547,6 +558,10 @@ const int ID_GUTTER = wxNewId();
 #define BMP_OFFSET_RIGHT   BMP_ARTPROV(wxART_GO_FORWARD)
 #define BMP_OFFSET_UP      BMP_ARTPROV(wxART_GO_UP)
 #define BMP_OFFSET_DOWN    BMP_ARTPROV(wxART_GO_DOWN)
+
+#define BMP_LEFT_DOC       BMP_ARTPROV(wxART_GO_BACK)
+#define BMP_RIGHT_DOC      BMP_ARTPROV(wxART_GO_FORWARD)
+#define BMP_DIFF_DOC       BMP_ARTPROV(wxART_REDO)
 
 #ifdef __WXGTK__
     #define BMP_ZOOM_IN    BMP_ARTPROV("gtk-zoom-in")
@@ -597,11 +612,17 @@ public:
                          "Offset one of the pages up (Ctrl up)");
         toolbar->AddTool(ID_OFFSET_DOWN, "", BMP_OFFSET_DOWN,
                          "Offset one of the pages down (Ctrl down)");
+        toolbar->AddTool(ID_LEFT_DOC, "Left document", BMP_LEFT_DOC,
+                         "Show left document (Ctrl+<)");
+        toolbar->AddTool(ID_DIFF_DOC, "Diff document", BMP_DIFF_DOC,
+                         "Show diff document (Ctrl+d)");
+        toolbar->AddTool(ID_RIGHT_DOC, "Right document", BMP_RIGHT_DOC,
+                         "Show right document (Ctrl+>)");
 
         toolbar->Realize();
         SetToolBar(toolbar);
 
-        wxAcceleratorEntry accels[8];
+        wxAcceleratorEntry accels[11];
         accels[0].Set(wxACCEL_NORMAL, WXK_PAGEUP, ID_PREV_PAGE);
         accels[1].Set(wxACCEL_NORMAL, WXK_PAGEDOWN, ID_NEXT_PAGE);
         accels[2].Set(wxACCEL_CTRL, (int)'=', ID_ZOOM_IN);
@@ -610,8 +631,11 @@ public:
         accels[5].Set(wxACCEL_CTRL, WXK_RIGHT, ID_OFFSET_RIGHT);
         accels[6].Set(wxACCEL_CTRL, WXK_UP, ID_OFFSET_UP);
         accels[7].Set(wxACCEL_CTRL, WXK_DOWN, ID_OFFSET_DOWN);
+        accels[8].Set(wxACCEL_CTRL, (int)',',  ID_LEFT_DOC);
+        accels[9].Set(wxACCEL_CTRL, (int)'.', ID_RIGHT_DOC);
+        accels[10].Set(wxACCEL_CTRL, (int)'d', ID_DIFF_DOC);
 
-        wxAcceleratorTable accel_table(8, accels);
+        wxAcceleratorTable accel_table(11, accels);
         SetAcceleratorTable(accel_table);
 
         m_gutter = new Gutter(this, ID_GUTTER);
@@ -695,8 +719,33 @@ private:
                                     m_offset.x, m_offset.y,
                                     &thumbnail, Gutter::WIDTH
                                 );
+        // Render page according to the current display mode
+        switch ( m_display_mode )
+        {
+            case SHOW_LEFT_DOCUMENT:
+                // Try showing the left document; if not available, fall back
+                if ( img1 )
+                    m_viewer->Set(img1);
+                else if ( img2 )
+                    m_viewer->Set(img2);
+                else
+                    m_viewer->Set(NULL);
+                break;
 
-        m_viewer->Set(diff ? diff : img1);
+            case SHOW_RIGHT_DOCUMENT:
+                // Try showing the right document; if not available, fall back
+                if ( img2 )
+                    m_viewer->Set(img2);
+                else if ( img1 )
+                    m_viewer->Set(img1);
+                else
+                    m_viewer->Set(NULL);
+                break;
+
+            case SHOW_DIFF_DOCUMENT:
+            default:
+                m_viewer->Set(diff ? diff : img1);
+        }
 
         // Always update the diff map. It will be all-white if there were
         // no differences.
@@ -788,6 +837,30 @@ private:
         DoUpdatePage();
     }
 
+    void ResetOffset()
+    {
+        m_offset = wxPoint(0, 0);
+        DoUpdatePage();
+    }
+
+    void OnShowLeftDocument(wxCommandEvent&)
+    {
+        m_display_mode = SHOW_LEFT_DOCUMENT;
+        DoUpdatePage();
+    }
+
+    void OnShowDiffDocument(wxCommandEvent&)
+    {
+        m_display_mode = SHOW_DIFF_DOCUMENT;
+        DoUpdatePage();
+    }
+
+    void OnShowRightDocument(wxCommandEvent&)
+    {
+        m_display_mode = SHOW_RIGHT_DOCUMENT;
+        DoUpdatePage();
+    }
+
     void OnOffsetLeft(wxCommandEvent&) { DoOffset(-1, 0); }
     void OnOffsetRight(wxCommandEvent&) { DoOffset(1, 0); }
     void OnOffsetUp(wxCommandEvent&) { DoOffset(0, -1); }
@@ -803,6 +876,7 @@ private:
     int m_diff_count;
     int m_cur_page;
     wxPoint m_offset;
+    DisplayMode m_display_mode;
 };
 
 BEGIN_EVENT_TABLE(DiffFrame, wxFrame)
@@ -817,6 +891,9 @@ BEGIN_EVENT_TABLE(DiffFrame, wxFrame)
     EVT_TOOL     (ID_OFFSET_RIGHT, DiffFrame::OnOffsetRight)
     EVT_TOOL     (ID_OFFSET_UP,    DiffFrame::OnOffsetUp)
     EVT_TOOL     (ID_OFFSET_DOWN,  DiffFrame::OnOffsetDown)
+    EVT_TOOL     (ID_LEFT_DOC,     DiffFrame::OnShowLeftDocument)
+    EVT_TOOL     (ID_DIFF_DOC,     DiffFrame::OnShowDiffDocument)
+    EVT_TOOL     (ID_RIGHT_DOC,    DiffFrame::OnShowRightDocument)
 END_EVENT_TABLE()
 
 
