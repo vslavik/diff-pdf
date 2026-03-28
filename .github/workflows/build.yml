@@ -7,7 +7,7 @@ jobs:
     name: Build on Linux
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install dependencies
       run: |
@@ -27,7 +27,7 @@ jobs:
       run: make dist
 
     - name: Upload source tarball
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: source-tarball
         path: diff-pdf-*.tar.gz
@@ -42,7 +42,7 @@ jobs:
         shell: msys2 {0}
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
 
     - name: Setup MSYS2 environment
       uses: msys2/setup-msys2@v2
@@ -63,7 +63,7 @@ jobs:
     - name: Build Windows archive
       run: make windows-dist
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v6
       with:
         name: windows-binaries
         path: diff-pdf*.zip
@@ -75,11 +75,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-linux, build-windows]
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: source-tarball
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           name: windows-binaries
 
