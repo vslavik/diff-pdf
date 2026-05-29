@@ -544,6 +544,7 @@ const int ID_OFFSET_LEFT = wxNewId();
 const int ID_OFFSET_RIGHT = wxNewId();
 const int ID_OFFSET_UP = wxNewId();
 const int ID_OFFSET_DOWN = wxNewId();
+const int ID_OFFSET_RESET = wxNewId();
 const int ID_GUTTER = wxNewId();
 const int ID_LEFT_DOC = wxNewId();
 const int ID_RIGHT_DOC = wxNewId();
@@ -558,6 +559,7 @@ const int ID_DIFF_DOC = wxNewId();
 #define BMP_OFFSET_RIGHT   BMP_ARTPROV(wxART_GO_FORWARD)
 #define BMP_OFFSET_UP      BMP_ARTPROV(wxART_GO_UP)
 #define BMP_OFFSET_DOWN    BMP_ARTPROV(wxART_GO_DOWN)
+#define BMP_OFFSET_RESET   BMP_ARTPROV(wxART_UNDO)
 
 #define BMP_LEFT_DOC       BMP_ARTPROV(wxART_GO_BACK)
 #define BMP_RIGHT_DOC      BMP_ARTPROV(wxART_GO_FORWARD)
@@ -608,6 +610,8 @@ public:
                          "Offset one of the pages to the left (Ctrl left)");
         toolbar->AddTool(ID_OFFSET_RIGHT, "", BMP_OFFSET_RIGHT,
                          "Offset one of the pages to the right (Ctrl right)");
+        toolbar->AddTool(ID_OFFSET_RESET, "", BMP_OFFSET_RESET,
+                         "Reset the page offset (Ctrl+c)");
         toolbar->AddTool(ID_OFFSET_UP, "", BMP_OFFSET_UP,
                          "Offset one of the pages up (Ctrl up)");
         toolbar->AddTool(ID_OFFSET_DOWN, "", BMP_OFFSET_DOWN,
@@ -622,7 +626,7 @@ public:
         toolbar->Realize();
         SetToolBar(toolbar);
 
-        wxAcceleratorEntry accels[11];
+        wxAcceleratorEntry accels[12];
         accels[0].Set(wxACCEL_NORMAL, WXK_PAGEUP, ID_PREV_PAGE);
         accels[1].Set(wxACCEL_NORMAL, WXK_PAGEDOWN, ID_NEXT_PAGE);
         accels[2].Set(wxACCEL_CTRL, (int)'=', ID_ZOOM_IN);
@@ -634,8 +638,9 @@ public:
         accels[8].Set(wxACCEL_CTRL, (int)',',  ID_LEFT_DOC);
         accels[9].Set(wxACCEL_CTRL, (int)'.', ID_RIGHT_DOC);
         accels[10].Set(wxACCEL_CTRL, (int)'d', ID_DIFF_DOC);
+        accels[11].Set(wxACCEL_CTRL, (int)'c', ID_OFFSET_RESET);
 
-        wxAcceleratorTable accel_table(11, accels);
+        wxAcceleratorTable accel_table(12, accels);
         SetAcceleratorTable(accel_table);
 
         m_gutter = new Gutter(this, ID_GUTTER);
@@ -865,6 +870,8 @@ private:
     void OnOffsetRight(wxCommandEvent&) { DoOffset(1, 0); }
     void OnOffsetUp(wxCommandEvent&) { DoOffset(0, -1); }
     void OnOffsetDown(wxCommandEvent&) { DoOffset(0, 1); }
+    void OnOffsetReset(wxCommandEvent&) { ResetOffset(); }
+
 
     DECLARE_EVENT_TABLE()
 
@@ -891,6 +898,7 @@ BEGIN_EVENT_TABLE(DiffFrame, wxFrame)
     EVT_TOOL     (ID_OFFSET_RIGHT, DiffFrame::OnOffsetRight)
     EVT_TOOL     (ID_OFFSET_UP,    DiffFrame::OnOffsetUp)
     EVT_TOOL     (ID_OFFSET_DOWN,  DiffFrame::OnOffsetDown)
+    EVT_TOOL     (ID_OFFSET_RESET, DiffFrame::OnOffsetReset)
     EVT_TOOL     (ID_LEFT_DOC,     DiffFrame::OnShowLeftDocument)
     EVT_TOOL     (ID_DIFF_DOC,     DiffFrame::OnShowDiffDocument)
     EVT_TOOL     (ID_RIGHT_DOC,    DiffFrame::OnShowRightDocument)
