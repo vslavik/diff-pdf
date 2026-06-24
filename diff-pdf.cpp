@@ -65,10 +65,10 @@ bool g_grayscale = false;
 #define DEFAULT_RESOLUTION 300
 long g_resolution = DEFAULT_RESOLUTION;
 
-// Rectangle (in PDF points, origin top-left) within which differences are
+// Rectangles (in PDF points, origin top-left) within which differences are
 // ignored entirely.
-struct IgnoreArea { double x, y, w, h; bool valid; };
-IgnoreArea g_ignore_area = { 0, 0, 0, 0, false };
+struct IgnoreArea { double x, y, w, h; };
+std::vector<IgnoreArea> g_ignore_areas;
 
 inline unsigned char to_grayscale(unsigned char r, unsigned char g, unsigned char b)
 {
@@ -180,21 +180,34 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
     const unsigned char *data2 = s2 ? cairo_image_surface_get_data(s2) : NULL;
     unsigned char *datadiff = cairo_image_surface_get_data(diff);
 
-    // convert the ignore area from PDF points to pixel coordinates in the
+    // convert the ignore areas from PDF points to pixel coordinates in the
     // rdiff coordinate space:
-    wxRect ignore_px;
-    if ( g_ignore_area.valid )
+    std::vector<wxRect> ignore_px;
     {
         const double scale = (int)g_resolution / 72.0;
-        // round the edges individually (rather than rounding width/height
-        // separately) so the rectangle covers every pixel that the
-        // rasterizer may have touched, including anti-aliased borders
-        const int px1 = wxRound(g_ignore_area.x * scale);
-        const int py1 = wxRound(g_ignore_area.y * scale);
-        const int px2 = wxRound((g_ignore_area.x + g_ignore_area.w) * scale);
-        const int py2 = wxRound((g_ignore_area.y + g_ignore_area.h) * scale);
-        ignore_px = wxRect(px1 + r1.x, py1 + r1.y, px2 - px1, py2 - py1);
+        for ( size_t i = 0; i < g_ignore_areas.size(); i++ )
+        {
+            const IgnoreArea& a = g_ignore_areas[i];
+            // round the edges individually (rather than rounding width/height
+            // separately) so the rectangle covers every pixel that the
+            // rasterizer may have touched, including anti-aliased borders
+            const int px1 = wxRound(a.x * scale);
+            const int py1 = wxRound(a.y * scale);
+            const int px2 = wxRound((a.x + a.w) * scale);
+            const int py2 = wxRound((a.y + a.h) * scale);
+            ignore_px.push_back(wxRect(px1 + r1.x, py1 + r1.y, px2 - px1, py2 - py1));
+        }
     }
+
+    auto is_ignored = [&ignore_px](int x, int y) -> bool
+    {
+        for ( size_t i = 0; i < ignore_px.size(); i++ )
+        {
+            if ( ignore_px[i].Contains(x, y) )
+                return true;
+        }
+        return false;
+    };
 
     // we visualize the differences by taking one channel from s1
     // and the other two channels from s2:
@@ -232,7 +245,7 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
                 unsigned char cg2 = *(data2 + x + 1);
                 unsigned char cb2 = *(data2 + x + 2);
 
-                const bool ignored = g_ignore_area.valid && ignore_px.Contains(r2.x + x/4, r2.y + y);
+                const bool ignored = is_ignored(r2.x + x/4, r2.y + y);
 
                 if ( ( cr1 > (cr2+g_channel_tolerance) || cr1 < (cr2-g_channel_tolerance)
                     || cg1 > (cg2+g_channel_tolerance) || cg1 < (cg2-g_channel_tolerance)
@@ -363,17 +376,20 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
     // If we specified a tolerance, then return if we have exceeded that for this page
     if ( g_per_page_pixel_tolerance == 0 ? changes : pixel_diff_count > g_per_page_pixel_tolerance)
     {
-        if ( g_ignore_area.valid )
+        if ( !ignore_px.empty() )
         {
-            // mark the ignored area with a dashed gray outline, so it's
-            // clear when reviewing the diff that it was excluded on purpose
+            // mark the ignored areas with a dashed gray outline, so it's
+            // clear when reviewing the diff that they were excluded on purpose
             cairo_t *cr = cairo_create(diff);
             static const double dashes[] = { 4.0, 4.0 };
             cairo_set_dash(cr, dashes, 2, 0);
             cairo_set_line_width(cr, 2.0);
             cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
-            cairo_rectangle(cr, ignore_px.x, ignore_px.y, ignore_px.width, ignore_px.height);
-            cairo_stroke(cr);
+            for ( size_t i = 0; i < ignore_px.size(); i++ )
+            {
+                cairo_rectangle(cr, ignore_px[i].x, ignore_px[i].y, ignore_px[i].width, ignore_px[i].height);
+                cairo_stroke(cr);
+            }
             cairo_destroy(cr);
         }
 
@@ -1039,7 +1055,9 @@ int main(int argc, char *argv[])
                   wxCMD_LINE_VAL_NUMBER },
 
         { wxCMD_LINE_OPTION,
-                  NULL, "ignore-area", "ignore differences inside a rectangle, given as X,Y,WIDTH,HEIGHT in PDF points: X,Y is the top-left corner of the rectangle (measured from the page's top-left corner)",
+                  NULL, "ignore-area", "ignore differences inside one or more rectangles, each given as X,Y,WIDTH,HEIGHT in PDF points"
+                  "(X,Y is the rectangle's top-left corner, measured from the page's top-left corner); separate multiple rectangles with ';',"
+                  "e.g. --ignore-area=\"20,750,80,80;480,700,40,40\"",
                   wxCMD_LINE_VAL_STRING },
 
         { wxCMD_LINE_OPTION,
@@ -1119,28 +1137,31 @@ int main(int argc, char *argv[])
     wxString ignore_area_str;
     if ( parser.Found("ignore-area", &ignore_area_str) )
     {
-        wxStringTokenizer tokenizer(ignore_area_str, ",");
-        double values[4];
-        bool ok = true;
-        size_t count = 0;
-        while ( ok && tokenizer.HasMoreTokens() && count < 4 )
-            ok = tokenizer.GetNextToken().ToCDouble(&values[count++]);
-        ok = ok && (count == 4) && !tokenizer.HasMoreTokens();
-
-        if ( !ok || values[2] <= 0 || values[3] <= 0 )
+        wxStringTokenizer area_tokenizer(ignore_area_str, ";");
+        while ( area_tokenizer.HasMoreTokens() )
         {
-            fprintf(stderr, "Invalid ignore-area: %s. Expected X,Y,WIDTH,HEIGHT in PDF points "
-                    "(X,Y = top-left corner of the rectangle, measured from the page's top-left "
-                    "corner)\n",
-                    (const char*) ignore_area_str.c_str());
-            return 2;
-        }
+            const wxString one_area = area_tokenizer.GetNextToken();
 
-        g_ignore_area.x = values[0];
-        g_ignore_area.y = values[1];
-        g_ignore_area.w = values[2];
-        g_ignore_area.h = values[3];
-        g_ignore_area.valid = true;
+            wxStringTokenizer tokenizer(one_area, ",");
+            double values[4];
+            bool ok = true;
+            size_t count = 0;
+            while ( ok && tokenizer.HasMoreTokens() && count < 4 )
+                ok = tokenizer.GetNextToken().ToCDouble(&values[count++]);
+            ok = ok && (count == 4) && !tokenizer.HasMoreTokens();
+
+            if ( !ok || values[2] <= 0 || values[3] <= 0 )
+            {
+                fprintf(stderr, "Invalid ignore-area: %s. Expected one or more X,Y,WIDTH,HEIGHT "
+                        "rectangles (in PDF points; X,Y = top-left corner, measured from the "
+                        "page's top-left corner; WIDTH,HEIGHT > 0), separated by ';', e.g. 20,750,80,80;480,700,40,40\n",
+                        (const char*) ignore_area_str.c_str());
+                return 2;
+            }
+
+            IgnoreArea area = { values[0], values[1], values[2], values[3] };
+            g_ignore_areas.push_back(area);
+        }
     }
 
     if ( parser.Found("channel-tolerance", &g_channel_tolerance) )
