@@ -262,6 +262,13 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
                     }
                 }
 
+                // leave pixels in the ignored area showing s1's original
+                // image, undistorted by the diff color overlay
+                if ( ignored )
+                {
+                    continue;
+                }
+
                 if (g_grayscale)
                 {
                     // convert both images to grayscale, use blue for s1, red for s2
