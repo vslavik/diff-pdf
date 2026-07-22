@@ -1150,11 +1150,11 @@ int main(int argc, char *argv[])
                 ok = tokenizer.GetNextToken().ToCDouble(&values[count++]);
             ok = ok && (count == 4) && !tokenizer.HasMoreTokens();
 
-            if ( !ok || values[2] <= 0 || values[3] <= 0 )
+            if ( !ok || values[0] < 0 || values[1] < 0 || values[2] <= 0 || values[3] <= 0 )
             {
                 fprintf(stderr, "Invalid ignore-area: %s. Expected one or more X,Y,WIDTH,HEIGHT "
                         "rectangles (in PDF points; X,Y = top-left corner, measured from the "
-                        "page's top-left corner; WIDTH,HEIGHT > 0), separated by ';', e.g. 20,750,80,80;480,700,40,40\n",
+                        "page's top-left corner, with X,Y >= 0; WIDTH,HEIGHT > 0), separated by ';', e.g. 20,750,80,80;480,700,40,40\n",
                         (const char*) ignore_area_str.c_str());
                 return 2;
             }
