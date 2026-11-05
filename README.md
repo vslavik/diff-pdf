@@ -46,7 +46,7 @@ work from any place you unpack it to.
 Alternatively, if you use [Chocolatey](https://chocolatey.org/), you can install
 diff-pdf on Windows with:
 ```
-$ choco install diff-pdf
+> choco install diff-pdf
 ```
 On Mac, if you use [Homebrew](https://brew.sh), you can use it to install diff-pdf with it:
 ```
