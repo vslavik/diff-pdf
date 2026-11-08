@@ -24,6 +24,7 @@
 #include <assert.h>
 
 #include <vector>
+#include <cmath>
 
 #include <glib.h>
 #include <poppler.h>
@@ -188,13 +189,12 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
         for ( size_t i = 0; i < g_ignore_areas.size(); i++ )
         {
             const IgnoreArea& a = g_ignore_areas[i];
-            // round the edges individually (rather than rounding width/height
-            // separately) so the rectangle covers every pixel that the
+            // round the edges outward so the rectangle covers every pixel that the
             // rasterizer may have touched, including anti-aliased borders
-            const int px1 = wxRound(a.x * scale);
-            const int py1 = wxRound(a.y * scale);
-            const int px2 = wxRound((a.x + a.w) * scale);
-            const int py2 = wxRound((a.y + a.h) * scale);
+            const int px1 = int(std::floor(a.x * scale));
+            const int py1 = int(std::floor(a.y * scale));
+            const int px2 = int(std::ceil((a.x + a.w) * scale));
+            const int py2 = int(std::ceil((a.y + a.h) * scale));
             ignore_px.push_back(wxRect(px1 + r1.x, py1 + r1.y, px2 - px1, py2 - py1));
         }
     }
