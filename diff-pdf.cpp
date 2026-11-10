@@ -1146,17 +1146,21 @@ int main(int argc, char *argv[])
     wxString ignore_area_str;
     if ( parser.Found("ignore-area", &ignore_area_str) )
     {
-        wxStringTokenizer area_tokenizer(ignore_area_str, ";");
-        while ( area_tokenizer.HasMoreTokens() )
+        wxStringTokenizer area_tokenizer(ignore_area_str, ";", wxTOKEN_RET_EMPTY_ALL);
+        do
         {
             const wxString one_area = area_tokenizer.GetNextToken();
 
-            wxStringTokenizer tokenizer(one_area, ",");
+            wxStringTokenizer tokenizer(one_area, ",", wxTOKEN_RET_EMPTY_ALL);
             double values[4];
             bool ok = true;
             size_t count = 0;
             while ( ok && tokenizer.HasMoreTokens() && count < 4 )
-                ok = tokenizer.GetNextToken().ToCDouble(&values[count++]);
+            {
+                ok = tokenizer.GetNextToken().ToCDouble(&values[count])
+                     && std::isfinite(values[count]);
+                count++;
+            }
             ok = ok && (count == 4) && !tokenizer.HasMoreTokens();
 
             if ( !ok || values[0] < 0 || values[1] < 0 || values[2] <= 0 || values[3] <= 0 )
@@ -1171,6 +1175,7 @@ int main(int argc, char *argv[])
             IgnoreArea area = { values[0], values[1], values[2], values[3] };
             g_ignore_areas.push_back(area);
         }
+        while ( area_tokenizer.HasMoreTokens() );
     }
 
     if ( parser.Found("channel-tolerance", &g_channel_tolerance) )
