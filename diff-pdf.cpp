@@ -1032,6 +1032,12 @@ int main(int argc, char *argv[])
     if ( parser.Found("grayscale") )
         g_grayscale = true;
 
+    if ( parser.Found("view") && parser.Found("output-diff") )
+    {
+        fprintf(stderr, "The --view and --output-diff options cannot be used together.\n");
+        return 2;
+    }
+
     wxFileName file1(parser.GetParam(0));
     wxFileName file2(parser.GetParam(1));
     file1.MakeAbsolute();
