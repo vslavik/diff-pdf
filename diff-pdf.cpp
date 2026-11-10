@@ -111,10 +111,20 @@ cairo_surface_t *render_page(PopplerPage *page)
 }
 
 
+struct DiffResult
+{
+    // Comparison image, including annotations; may exist even without differences.
+    // NULL if no image is needed. The caller owns the surface.
+    cairo_surface_t *image;
+
+    // Whether the pages differ under the configured ignore areas and tolerances.
+    bool has_differences;
+};
+
 // Creates image of differences between s1 and s2. If the offset is specified,
 // then s2 is displaced by it. If thumbnail and thumbnail_width are specified,
 // then a thumbnail with highlighted differences is created too.
-cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
+DiffResult diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
                              int offset_x = 0, int offset_y = 0,
                              wxImage *thumbnail = NULL, int thumbnail_width = -1)
 {
@@ -373,8 +383,9 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
     if ( g_verbose )
         printf("page %d has %ld pixels that differ\n", page, pixel_diff_count);
 
-    // If we specified a tolerance, then return if we have exceeded that for this page
-    if ( g_per_page_pixel_tolerance == 0 ? changes : pixel_diff_count > g_per_page_pixel_tolerance)
+    const bool page_differs = g_per_page_pixel_tolerance == 0
+                             ? changes : pixel_diff_count > g_per_page_pixel_tolerance;
+    if ( page_differs || !ignore_px.empty() )
     {
         if ( !ignore_px.empty() )
         {
@@ -393,18 +404,18 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
             cairo_destroy(cr);
         }
 
-        return diff;
+        return { diff, page_differs };
     }
     else
     {
         cairo_surface_destroy(diff);
-        return NULL;
+        return { NULL, page_differs };
     }
 }
 
 
-// Compares given two pages. If cr_out is not NULL, then the diff image (either
-// differences or unmodified page, if there are no diffs) is drawn to it.
+// Compares given two pages. If cr_out is not NULL, then the compared page,
+// including any ignored-area outlines, is drawn to it unless skipped.
 // If thumbnail and thumbnail_width are specified, then a thumbnail with
 // highlighted differences is created too.
 bool page_compare(int page, cairo_t *cr_out,
@@ -414,20 +425,19 @@ bool page_compare(int page, cairo_t *cr_out,
     cairo_surface_t *img1 = page1 ? render_page(page1) : NULL;
     cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
 
-    cairo_surface_t *diff = diff_images(page, img1, img2, 0, 0,
+    const DiffResult diff = diff_images(page, img1, img2, 0, 0,
                                         thumbnail, thumbnail_width);
-    const bool has_diff = (diff != NULL);
 
-    if ( cr_out )
+    if ( cr_out && (diff.has_differences || !g_skip_identical) )
     {
-        if ( diff )
+        if ( diff.image )
         {
             // render the difference as high-resolution bitmap
 
             cairo_save(cr_out);
             cairo_scale(cr_out, 72.0 / g_resolution, 72.0 / g_resolution);
 
-            cairo_set_source_surface(cr_out, diff ? diff : img1, 0, 0);
+            cairo_set_source_surface(cr_out, diff.image, 0, 0);
             cairo_paint(cr_out);
 
             cairo_restore(cr_out);
@@ -442,19 +452,18 @@ bool page_compare(int page, cairo_t *cr_out,
                poppler_page_render(page1, cr_out);
         }
 
-        if (diff || !g_skip_identical)
-            cairo_show_page(cr_out);
+        cairo_show_page(cr_out);
     }
 
-    if ( diff )
-        cairo_surface_destroy(diff);
+    if ( diff.image )
+        cairo_surface_destroy(diff.image);
 
     if ( img1 )
         cairo_surface_destroy(img1);
     if ( img2 )
         cairo_surface_destroy(img2);
 
-    return !has_diff;
+    return !diff.has_differences;
 }
 
 
@@ -775,7 +784,7 @@ private:
         cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
 
         wxImage thumbnail;
-        cairo_surface_t *diff = diff_images
+        const DiffResult diff = diff_images
                                 (
                                     m_cur_page,
                                     img1, img2,
@@ -807,7 +816,7 @@ private:
 
             case SHOW_DIFF_DOCUMENT:
             default:
-                m_viewer->Set(diff ? diff : img1);
+                m_viewer->Set(diff.image ? diff.image : img1);
         }
 
         // Always update the diff map. It will be all-white if there were
@@ -818,8 +827,8 @@ private:
             cairo_surface_destroy(img1);
         if ( img2 )
             cairo_surface_destroy(img2);
-        if ( diff )
-            cairo_surface_destroy(diff);
+        if ( diff.image )
+            cairo_surface_destroy(diff.image);
 
         UpdateStatus();
     }
