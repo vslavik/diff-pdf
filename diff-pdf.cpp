@@ -24,6 +24,7 @@
 #include <assert.h>
 
 #include <vector>
+#include <cmath>
 
 #include <glib.h>
 #include <poppler.h>
@@ -41,6 +42,7 @@
 #include <wx/artprov.h>
 #include <wx/progdlg.h>
 #include <wx/filesys.h>
+#include <wx/tokenzr.h>
 
 
 enum DisplayMode
@@ -63,6 +65,11 @@ bool g_grayscale = false;
 // Resolution to use for rasterization, in DPI
 #define DEFAULT_RESOLUTION 300
 long g_resolution = DEFAULT_RESOLUTION;
+
+// Rectangles (in PDF points, origin top-left) within which differences are
+// ignored entirely.
+struct IgnoreArea { double x, y, w, h; };
+std::vector<IgnoreArea> g_ignore_areas;
 
 inline unsigned char to_grayscale(unsigned char r, unsigned char g, unsigned char b)
 {
@@ -104,10 +111,20 @@ cairo_surface_t *render_page(PopplerPage *page)
 }
 
 
+struct DiffResult
+{
+    // Comparison image, including annotations; may exist even without differences.
+    // NULL if no image is needed. The caller owns the surface.
+    cairo_surface_t *image;
+
+    // Whether the pages differ under the configured ignore areas and tolerances.
+    bool has_differences;
+};
+
 // Creates image of differences between s1 and s2. If the offset is specified,
 // then s2 is displaced by it. If thumbnail and thumbnail_width are specified,
 // then a thumbnail with highlighted differences is created too.
-cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
+DiffResult diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
                              int offset_x = 0, int offset_y = 0,
                              wxImage *thumbnail = NULL, int thumbnail_width = -1)
 {
@@ -174,6 +191,34 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
     const unsigned char *data2 = s2 ? cairo_image_surface_get_data(s2) : NULL;
     unsigned char *datadiff = cairo_image_surface_get_data(diff);
 
+    // convert the ignore areas from PDF points to pixel coordinates in the
+    // rdiff coordinate space:
+    std::vector<wxRect> ignore_px;
+    {
+        const double scale = (int)g_resolution / 72.0;
+        for ( size_t i = 0; i < g_ignore_areas.size(); i++ )
+        {
+            const IgnoreArea& a = g_ignore_areas[i];
+            // round the edges outward so the rectangle covers every pixel that the
+            // rasterizer may have touched, including anti-aliased borders
+            const int px1 = int(std::floor(a.x * scale));
+            const int py1 = int(std::floor(a.y * scale));
+            const int px2 = int(std::ceil((a.x + a.w) * scale));
+            const int py2 = int(std::ceil((a.y + a.h) * scale));
+            ignore_px.push_back(wxRect(px1 + r1.x, py1 + r1.y, px2 - px1, py2 - py1));
+        }
+    }
+
+    auto is_ignored = [&ignore_px](int x, int y) -> bool
+    {
+        for ( size_t i = 0; i < ignore_px.size(); i++ )
+        {
+            if ( ignore_px[i].Contains(x, y) )
+                return true;
+        }
+        return false;
+    };
+
     // we visualize the differences by taking one channel from s1
     // and the other two channels from s2:
 
@@ -210,9 +255,13 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
                 unsigned char cg2 = *(data2 + x + 1);
                 unsigned char cb2 = *(data2 + x + 2);
 
-                if ( cr1 > (cr2+g_channel_tolerance) || cr1 < (cr2-g_channel_tolerance)
-                  || cg1 > (cg2+g_channel_tolerance) || cg1 < (cg2-g_channel_tolerance)
-                  || cb1 > (cb2+g_channel_tolerance) || cb1 < (cb2-g_channel_tolerance)
+                const bool ignored = is_ignored(r2.x + x/4, r2.y + y);
+
+                if ( ( cr1 > (cr2+g_channel_tolerance) || cr1 < (cr2-g_channel_tolerance)
+                    || cg1 > (cg2+g_channel_tolerance) || cg1 < (cg2-g_channel_tolerance)
+                    || cb1 > (cb2+g_channel_tolerance) || cb1 < (cb2-g_channel_tolerance)
+                     )
+                  && !ignored
                    )
                 {
                     pixel_diff_count++;
@@ -234,6 +283,13 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
                         // mark changes with red
                         thumbnail->SetRGB(tx, ty, 255, 0, 0);
                     }
+                }
+
+                // leave pixels in the ignored area showing s1's original
+                // image, undistorted by the diff color overlay
+                if ( ignored )
+                {
+                    continue;
                 }
 
                 if (g_grayscale)
@@ -327,21 +383,39 @@ cairo_surface_t *diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
     if ( g_verbose )
         printf("page %d has %ld pixels that differ\n", page, pixel_diff_count);
 
-    // If we specified a tolerance, then return if we have exceeded that for this page
-    if ( g_per_page_pixel_tolerance == 0 ? changes : pixel_diff_count > g_per_page_pixel_tolerance)
+    const bool page_differs = g_per_page_pixel_tolerance == 0
+                             ? changes : pixel_diff_count > g_per_page_pixel_tolerance;
+    if ( page_differs || !ignore_px.empty() )
     {
-        return diff;
+        if ( !ignore_px.empty() )
+        {
+            // mark the ignored areas with a dashed gray outline, so it's
+            // clear when reviewing the diff that they were excluded on purpose
+            cairo_t *cr = cairo_create(diff);
+            static const double dashes[] = { 4.0, 4.0 };
+            cairo_set_dash(cr, dashes, 2, 0);
+            cairo_set_line_width(cr, 2.0);
+            cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
+            for ( size_t i = 0; i < ignore_px.size(); i++ )
+            {
+                cairo_rectangle(cr, ignore_px[i].x, ignore_px[i].y, ignore_px[i].width, ignore_px[i].height);
+                cairo_stroke(cr);
+            }
+            cairo_destroy(cr);
+        }
+
+        return { diff, page_differs };
     }
     else
     {
         cairo_surface_destroy(diff);
-        return NULL;
+        return { NULL, page_differs };
     }
 }
 
 
-// Compares given two pages. If cr_out is not NULL, then the diff image (either
-// differences or unmodified page, if there are no diffs) is drawn to it.
+// Compares given two pages. If cr_out is not NULL, then the compared page,
+// including any ignored-area outlines, is drawn to it unless skipped.
 // If thumbnail and thumbnail_width are specified, then a thumbnail with
 // highlighted differences is created too.
 bool page_compare(int page, cairo_t *cr_out,
@@ -351,20 +425,19 @@ bool page_compare(int page, cairo_t *cr_out,
     cairo_surface_t *img1 = page1 ? render_page(page1) : NULL;
     cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
 
-    cairo_surface_t *diff = diff_images(page, img1, img2, 0, 0,
+    const DiffResult diff = diff_images(page, img1, img2, 0, 0,
                                         thumbnail, thumbnail_width);
-    const bool has_diff = (diff != NULL);
 
-    if ( cr_out )
+    if ( cr_out && (diff.has_differences || !g_skip_identical) )
     {
-        if ( diff )
+        if ( diff.image )
         {
             // render the difference as high-resolution bitmap
 
             cairo_save(cr_out);
             cairo_scale(cr_out, 72.0 / g_resolution, 72.0 / g_resolution);
 
-            cairo_set_source_surface(cr_out, diff ? diff : img1, 0, 0);
+            cairo_set_source_surface(cr_out, diff.image, 0, 0);
             cairo_paint(cr_out);
 
             cairo_restore(cr_out);
@@ -379,19 +452,18 @@ bool page_compare(int page, cairo_t *cr_out,
                poppler_page_render(page1, cr_out);
         }
 
-        if (diff || !g_skip_identical)
-            cairo_show_page(cr_out);
+        cairo_show_page(cr_out);
     }
 
-    if ( diff )
-        cairo_surface_destroy(diff);
+    if ( diff.image )
+        cairo_surface_destroy(diff.image);
 
     if ( img1 )
         cairo_surface_destroy(img1);
     if ( img2 )
         cairo_surface_destroy(img2);
 
-    return !has_diff;
+    return !diff.has_differences;
 }
 
 
@@ -712,7 +784,7 @@ private:
         cairo_surface_t *img2 = page2 ? render_page(page2) : NULL;
 
         wxImage thumbnail;
-        cairo_surface_t *diff = diff_images
+        const DiffResult diff = diff_images
                                 (
                                     m_cur_page,
                                     img1, img2,
@@ -744,7 +816,7 @@ private:
 
             case SHOW_DIFF_DOCUMENT:
             default:
-                m_viewer->Set(diff ? diff : img1);
+                m_viewer->Set(diff.image ? diff.image : img1);
         }
 
         // Always update the diff map. It will be all-white if there were
@@ -755,8 +827,8 @@ private:
             cairo_surface_destroy(img1);
         if ( img2 )
             cairo_surface_destroy(img2);
-        if ( diff )
-            cairo_surface_destroy(diff);
+        if ( diff.image )
+            cairo_surface_destroy(diff.image);
 
         UpdateStatus();
     }
@@ -992,6 +1064,12 @@ int main(int argc, char *argv[])
                   wxCMD_LINE_VAL_NUMBER },
 
         { wxCMD_LINE_OPTION,
+                  NULL, "ignore-area", "ignore differences inside one or more rectangles, each given as X,Y,WIDTH,HEIGHT in PDF points"
+                  "(X,Y is the rectangle's top-left corner, measured from the page's top-left corner); separate multiple rectangles with ';',"
+                  "e.g. --ignore-area=\"20,750,80,80;480,700,40,40\"",
+                  wxCMD_LINE_VAL_STRING },
+
+        { wxCMD_LINE_OPTION,
                   NULL, "dpi", "rasterization resolution (default: " wxSTRINGIZE(DEFAULT_RESOLUTION) " dpi)",
                   wxCMD_LINE_VAL_NUMBER },
 
@@ -1069,6 +1147,41 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Invalid per-page-pixel-tolerance: %ld. Must be 0 or more\n", g_per_page_pixel_tolerance);
             return 2;
         }
+    }
+
+    wxString ignore_area_str;
+    if ( parser.Found("ignore-area", &ignore_area_str) )
+    {
+        wxStringTokenizer area_tokenizer(ignore_area_str, ";", wxTOKEN_RET_EMPTY_ALL);
+        do
+        {
+            const wxString one_area = area_tokenizer.GetNextToken();
+
+            wxStringTokenizer tokenizer(one_area, ",", wxTOKEN_RET_EMPTY_ALL);
+            double values[4];
+            bool ok = true;
+            size_t count = 0;
+            while ( ok && tokenizer.HasMoreTokens() && count < 4 )
+            {
+                ok = tokenizer.GetNextToken().ToCDouble(&values[count])
+                     && std::isfinite(values[count]);
+                count++;
+            }
+            ok = ok && (count == 4) && !tokenizer.HasMoreTokens();
+
+            if ( !ok || values[0] < 0 || values[1] < 0 || values[2] <= 0 || values[3] <= 0 )
+            {
+                fprintf(stderr, "Invalid ignore-area: %s. Expected one or more X,Y,WIDTH,HEIGHT "
+                        "rectangles (in PDF points; X,Y = top-left corner, measured from the "
+                        "page's top-left corner, with X,Y >= 0; WIDTH,HEIGHT > 0), separated by ';', e.g. 20,750,80,80;480,700,40,40\n",
+                        (const char*) ignore_area_str.c_str());
+                return 2;
+            }
+
+            IgnoreArea area = { values[0], values[1], values[2], values[3] };
+            g_ignore_areas.push_back(area);
+        }
+        while ( area_tokenizer.HasMoreTokens() );
     }
 
     if ( parser.Found("channel-tolerance", &g_channel_tolerance) )
