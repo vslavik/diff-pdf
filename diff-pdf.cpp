@@ -131,6 +131,7 @@ DiffResult diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
     assert( s1 || s2 );
 
     long pixel_diff_count = 0;
+    std::vector<int> differing_lines;
     wxRect r1, r2;
 
     if ( s1 )
@@ -309,13 +310,24 @@ DiffResult diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
             }
 
             if (g_mark_differences && linediff)
+                differing_lines.push_back(y);
+        }
+    }
+
+    const bool page_differs = g_per_page_pixel_tolerance == 0
+                             ? changes : pixel_diff_count > g_per_page_pixel_tolerance;
+
+    // Draw row markers only if the page differs after applying tolerance.
+    if ( g_mark_differences && page_differs )
+    {
+        for ( int y : differing_lines )
+        {
+            unsigned char *out = datadiff + (r2.y + y) * stridediff + r2.x * 4;
+            for (int x = 0; x < (10 < r2.width ? 10 : r2.width) * 4; x+=4)
             {
-                for (int x = 0; x < (10 < r2.width ? 10 : r2.width) * 4; x+=4)
-                {
-                   *(out + x + 0) = 0;
-                   *(out + x + 1) = 0;
-                   *(out + x + 2) = 255;
-                }
+               *(out + x + 0) = 0;
+               *(out + x + 1) = 0;
+               *(out + x + 2) = 255;
             }
         }
     }
@@ -383,8 +395,6 @@ DiffResult diff_images(int page, cairo_surface_t *s1, cairo_surface_t *s2,
     if ( g_verbose )
         printf("page %d has %ld pixels that differ\n", page, pixel_diff_count);
 
-    const bool page_differs = g_per_page_pixel_tolerance == 0
-                             ? changes : pixel_diff_count > g_per_page_pixel_tolerance;
     if ( page_differs || !ignore_px.empty() )
     {
         if ( !ignore_px.empty() )
